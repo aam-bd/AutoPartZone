@@ -1,9 +1,9 @@
 import express from "express";
-import { browseProducts, searchProducts } from "../controllers/searchController.js";
+import { searchProducts } from "../controllers/searchController.js";
 
 const router = express.Router();
 
-router.get("/", browseProducts);
-router.get("/search", searchProducts);
+// Public search route
+router.get("/", searchProducts);
 
 export default router;
