@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import '../App.css';
 import bg from '../assets/bd.png';
 import car from '../assets/car_transparent.gif';
@@ -32,12 +33,48 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (activeTab === 'signin') {
-        console.log("Logging in with:", formData.username, formData.password);
-    } else {
-        console.log("Signing up with:", formData);
-    }
+    (async () => {
+      try {
+        if (activeTab === 'signin') {
+          const payload = { email: formData.email, password: formData.password };
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Login failed');
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setMessage({ type: 'success', text: data.message || 'Login successful' });
+          navigate('/');
+        } else {
+          // Sign up: ensure passwords match
+          if (formData.password !== formData.confirmPassword) {
+            setMessage({ type: 'error', text: 'Passwords do not match' });
+            return;
+          }
+          const payload = { name: formData.username, email: formData.email, password: formData.password, role: 'customer' };
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Registration failed');
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setMessage({ type: 'success', text: data.message || 'User registered' });
+          navigate('/');
+        }
+      } catch (err) {
+        setMessage({ type: 'error', text: err.message });
+      }
+    })();
   };
+
+  const navigate = useNavigate();
+  const [message, setMessage] = useState(null);
 
   return (
     <div className="relative flex justify-center items-center w-full min-h-screen overflow-hidden">
@@ -132,17 +169,37 @@ const Login = () => {
             {activeTab === 'signin' ? 'Welcome Back' : 'Create Account'}
           </h2>
 
-          {/* USERNAME FIELD (Shared) */}
-          <div className="relative w-full">
-            <input 
-              type="text" 
-              name="username"
-              placeholder="Username" 
-              value={formData.username}
-              className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
-              onChange={handleInputChange}
-            />
-          </div>
+          {/* Message area */}
+          {message && (
+            <div className={`w-full p-3 rounded ${message.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+              {message.text}
+            </div>
+          )}
+
+          {/* IDENTIFIER FIELD: Email for Sign In, Username for Sign Up */}
+          {activeTab === 'signin' ? (
+            <div className="relative w-full">
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={formData.email}
+                className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                onChange={handleInputChange}
+              />
+            </div>
+          ) : (
+            <div className="relative w-full">
+              <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                value={formData.username}
+                className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                onChange={handleInputChange}
+              />
+            </div>
+          )}
 
           {/* EMAIL FIELD (Sign Up Only) */}
           {activeTab === 'signup' && (
