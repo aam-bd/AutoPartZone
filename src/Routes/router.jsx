@@ -3,10 +3,11 @@ import { createBrowserRouter, RouterProvider } from "react-router";
 import App from "../App"
 import ErrorPage from "../Pages/ErrorPage";
 import Login from "../Pages/Login";
+import Home from "../Pages/Home";
 const router = createBrowserRouter([
   {
     path: "/",
-    Component: App,
+    Component: Home,
     hydrateFallbackElement: <p>Loading...</p>,
     loader: () => fetch('Doctors.json'),
     errorElement: <ErrorPage />,
