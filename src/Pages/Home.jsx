@@ -1,5 +1,6 @@
 import React from 'react';
 import Navbar from '../Components/Navbar';
+import Footer from '../Components/Footer';
 import Carousel from '../Components/Carousel';
 import carousel1 from '../assets/carousel1.jpeg';
 import carousel2 from '../assets/carousel1.jpeg';
@@ -47,7 +48,7 @@ const Home = () => {
         ]}
       />
 
-            
+            <Footer></Footer>
         </div>
     );
 };

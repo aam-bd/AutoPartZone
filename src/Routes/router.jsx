@@ -1,9 +1,11 @@
 import React from "react";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import App from "../App"
+import contact from "../Pages/ContactPage";
 import ErrorPage from "../Pages/ErrorPage";
 import Login from "../Pages/Login";
 import Home from "../Pages/Home";
+import AboutPage from "../Pages/About";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -21,13 +23,15 @@ const router = createBrowserRouter([
   },
   {
     path: "/about",
-    element: (
-      <p className="text-center text-3xl font-bold">This is about page</p>
-    ),
+    Component: AboutPage
   },
   {
     path: "/login",
     element: <Login />
+  },
+  {
+    path: "/contact",
+    Component: contact
   }
 ]);
 export default router;

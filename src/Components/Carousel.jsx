@@ -36,7 +36,7 @@ const Carousel = ({ images }) => {
   };
 
   return (
-    <div className="relative w-full" data-carousel="slide">
+    <div className="relative w-full pt-24" data-carousel="slide">
       {/* Carousel wrapper */}
       <div className="relative h-64 overflow-hidden md:h-96 lg:h-[32rem]">
         {/* Slides */}
