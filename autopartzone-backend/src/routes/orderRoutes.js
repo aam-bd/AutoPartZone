@@ -1,5 +1,5 @@
 import express from "express";
-import { placeOrder, getOrders, updateStatus, getInvoice } from "../controllers/orderController.js";
+import { placeOrder, getOrders, updateStatus, getInvoice, getOrderById } from "../controllers/orderController.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 
@@ -10,6 +10,9 @@ router.post("/place", authenticate, placeOrder);
 
 // Admin/Staff: get all orders
 router.get("/", authenticate, authorize("admin", "staff"), getOrders);
+
+// Get specific order (customer/admin)
+router.get("/:id", authenticate, getOrderById);
 
 // Admin/Staff: update order status
 router.patch("/status/:id", authenticate, authorize("admin", "staff"), updateStatus);
