@@ -37,11 +37,11 @@ const AboutPage = () => {
   ];
 
   const milestones = [
-    { year: '2018', title: 'Company Founded', description: 'Started with just 3 passionate team members' },
-    { year: '2019', title: 'First Major Client', description: 'Landed our first enterprise client' },
-    { year: '2020', title: 'Product Launch', description: 'Released our flagship product' },
-    { year: '2022', title: 'Global Expansion', description: 'Opened international offices' },
-    { year: '2023', title: 'Award Recognition', description: 'Received industry excellence award' },
+    { year: '2025', title: 'Company Founded', description: 'Started with just 4 passionate team members' },
+    { year: '2026', title: 'First Major Client', description: 'Landed our first enterprise client' },
+    { year: '2027', title: 'Product Launch', description: 'Released our flagship product' },
+    { year: '2030', title: 'Global Expansion', description: 'Opened international offices' },
+    { year: '2032', title: 'Award Recognition', description: 'Received industry excellence award' },
   ];
 
   const values = [

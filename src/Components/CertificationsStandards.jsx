@@ -10,25 +10,25 @@ const CertificationsStandards = () => {
       icon: <Shield className="w-6 h-6" />,
       name: 'ISO 9001',
       description: 'Quality Management System',
-      year: '2022'
+      year: '2027'
     },
     {
       icon: <Award className="w-6 h-6" />,
       name: 'Industry Excellence',
       description: 'Award Winner',
-      year: '2023'
+      year: '2028'
     },
     {
       icon: <CheckCircle className="w-6 h-6" />,
       name: 'GDPR Compliant',
       description: 'Data Protection',
-      year: '2022'
+      year: '2026'
     },
     {
       icon: <Globe className="w-6 h-6" />,
       name: 'Global Standards',
       description: 'International Compliance',
-      year: '2023'
+      year: '2031'
     },
   ];
 
