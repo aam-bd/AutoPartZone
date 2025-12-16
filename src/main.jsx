@@ -5,16 +5,18 @@ import router from './Routes/router.jsx'
 import './App.css'
 import './index.css' // Ensure your Tailwind/Global styles are here
 
-// 1. Import BOTH Providers
+// Import all Providers
 import { VehicleProvider } from './context/VehicleContext.jsx'; 
-import { AuthProvider } from './context/AuthContext.jsx'; 
+import { AuthProvider } from './context/AuthContext.jsx';
+import { CartProvider } from './context/CartContext.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    {/* 2. Wrap everything in AuthProvider first, then VehicleProvider */}
     <AuthProvider>
       <VehicleProvider>
-        <RouterProvider router={router} />
+        <CartProvider>
+          <RouterProvider router={router} />
+        </CartProvider>
       </VehicleProvider>
     </AuthProvider>
   </StrictMode>,

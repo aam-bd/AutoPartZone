@@ -15,6 +15,9 @@ import AccountPage from "../Pages/AccountPage";
 import CategoryPage from "../Pages/CategoryPage";
 import OrderConfirmationPage from "../Pages/OrderConfirmationPage";
 import ShopPage from "../Pages/ShopPage"; // **NEW: Assuming you create this page**
+import AdminDashboard from "../Pages/AdminDashboard.jsx"; // **NEW: Admin Dashboard**
+import ReportsDashboard from "../Pages/ReportsDashboard.jsx"; // **NEW: Reports Dashboard**
+import OrderHistory from "../Pages/OrderHistory.jsx"; // **NEW: Order History**
 
 import AboutPage from "../Pages/About";
 const router = createBrowserRouter([
@@ -57,6 +60,18 @@ const router = createBrowserRouter([
       {
         path: "category/:categoryName",
         element: <CategoryPage />,
+      },
+      {
+        path: "admin/dashboard",
+        element: <AdminDashboard />,
+      },
+      {
+        path: "admin/reports",
+        element: <ReportsDashboard />,
+      },
+      {
+        path: "orders",
+        element: <OrderHistory />,
       },
     ],
   },

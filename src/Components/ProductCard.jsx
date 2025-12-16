@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useVehicle } from '../context/VehicleContext'; // CRITICAL: For fitment check
+import { useCart } from '../context/CartContext';
 
 // Placeholder for an Add to Cart icon
 const CartIcon = () => (
@@ -13,6 +14,7 @@ const CartIcon = () => (
 const ProductCard = ({ product }) => {
     // 1. Check Vehicle Context
     const { selectedVehicle } = useVehicle();
+    const { addToCart, isInCart } = useCart();
 
     // 2. Logic: Assume a product object has a `fitmentStatus` property, 
     //      or you can determine it here based on a simplified check.
@@ -33,7 +35,7 @@ const ProductCard = ({ product }) => {
             <div className="relative h-48 overflow-hidden">
                 
                 {/* *** CRITICAL FIX: Ensure this is the singular /product/ *** */}
-                <Link to={`/product/${product.id}`}>
+                <Link to={`/product/${product._id || product.id}`}>
                     <img 
                         src={product.image} 
                         alt={product.name} 
@@ -56,7 +58,7 @@ const ProductCard = ({ product }) => {
                 {/* Product Info */}
                 <div>
                     {/* *** CRITICAL FIX: Ensure this is the singular /product/ *** */}
-                    <Link to={`/product/${product.id}`} className="block text-sm font-semibold text-gray-800 hover:text-red-600 transition-colors line-clamp-2">
+                    <Link to={`/product/${product._id || product.id}`} className="block text-sm font-semibold text-gray-800 hover:text-red-600 transition-colors line-clamp-2">
                         {product.name}
                     </Link>
                     <div className="text-xs text-yellow-500 my-1">
@@ -69,18 +71,26 @@ const ProductCard = ({ product }) => {
                 {/* Price and Action */}
                 <div className="flex justify-between items-center mt-2">
                     <div>
-                        <span className="text-lg font-bold text-gray-900">${product.price.toFixed(2)}</span>
+                        <span className="text-lg font-bold text-gray-900">৳{product.price.toFixed(2)}</span>
                         {product.oldPrice && (
-                            <span className="text-xs text-gray-500 line-through ml-2">${product.oldPrice.toFixed(2)}</span>
+                            <span className="text-xs text-gray-500 line-through ml-2">৳{product.oldPrice.toFixed(2)}</span>
                         )}
                     </div>
                     <button 
                         className="bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors shadow-md flex items-center"
                         title="Add to Cart"
-                        // Optional: Disable button if fitment fails?
-                        disabled={selectedVehicle && !isFit} 
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            addToCart(product, 1);
+                        }}
+                        disabled={isInCart(product._id || product.id)}
                     >
-                        <CartIcon />
+                        {isInCart(product._id || product.id) ? (
+                            <i className="fas fa-check text-white"></i>
+                        ) : (
+                            <CartIcon />
+                        )}
                     </button>
                 </div>
             </div>

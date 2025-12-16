@@ -1,7 +1,52 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap');
-@import "tailwindcss";
-@plugin "daisyui";
 
 body, html {
   font-family: "Space Grotesk", sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+/* Layout Structure */
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main Content Area */
+.content-wrapper {
+  flex: 1;
+  padding-top: 96px; /* Space for fixed navbar (64px height + 32px padding) */
+}
+
+/* Ensure content doesn't hide behind navbar */
+main {
+  width: 100%;
+  min-height: calc(100vh - 96px);
+}
+
+/* Specific fixes for pages with special layouts */
+.homepage-content {
+  padding-top: 96px !important;
+}
+
+/* Product details page specific fix */
+.product-details-page {
+  padding-top: 96px !important;
+}
+
+/* Shop page specific fix */
+.shop-page {
+  padding-top: 96px !important;
+}
+
+/* Cart page specific fix */
+.cart-page {
+  padding-top: 96px !important;
+}
+
+/* Checkout page specific fix */
+.checkout-page {
+  padding-top: 96px !important;
 }

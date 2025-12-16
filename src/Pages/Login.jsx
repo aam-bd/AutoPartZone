@@ -44,21 +44,38 @@ const Login = () => {
 
     try {
       if (activeTab === "signin") {
-        const payload = { email: formData.email, password: formData.password };
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        // Mock login - accept any email/password for demo
+        if (!formData.email || !formData.password) {
+          setMessage({ type: "error", text: "Please fill in all fields" });
+          return;
+        }
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Login failed");
+        // Check for admin access
+        const isAdmin = formData.email.includes('admin') || formData.username === 'admin';
+        
+        // Create mock user data
+        const mockUser = {
+          _id: 'user-' + Date.now(),
+          name: formData.username || formData.email.split('@')[0],
+          email: formData.email,
+          role: isAdmin ? "admin" : "customer"
+        };
+        
+        const mockToken = 'mock-token-' + Date.now();
 
         // 4. USE THE CONTEXT LOGIN
-        login(data.user, data.token);
+        login(mockUser, mockToken);
 
-        setMessage({ type: "success", text: "Login successful" });
-        navigate("/");
+        const successMessage = isAdmin 
+          ? "Admin login successful! Welcome to Admin Dashboard."
+          : "Login successful! Welcome to AutoPartZone.";
+        setMessage({ type: "success", text: successMessage });
+        
+        if (isAdmin) {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
       } else {
         // Sign up: ensure passwords match
         if (formData.password !== formData.confirmPassword) {
@@ -66,26 +83,25 @@ const Login = () => {
           return;
         }
 
-        const payload = {
+        if (!formData.username || !formData.email || !formData.password) {
+          setMessage({ type: "error", text: "Please fill in all fields" });
+          return;
+        }
+
+        // Create mock user data
+        const mockUser = {
+          _id: 'user-' + Date.now(),
           name: formData.username,
           email: formData.email,
-          password: formData.password,
-          role: "customer",
+          role: "customer"
         };
-
-        const res = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Registration failed");
+        
+        const mockToken = 'mock-token-' + Date.now();
 
         // 5. USE THE CONTEXT LOGIN HERE TOO
-        login(data.user, data.token);
+        login(mockUser, mockToken);
 
-        setMessage({ type: "success", text: "User registered" });
+        setMessage({ type: "success", text: "Registration successful" });
         navigate("/");
       }
     } catch (err) {

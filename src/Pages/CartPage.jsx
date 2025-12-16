@@ -74,7 +74,7 @@ const CartItem = ({ item }) => {
 // --- Main Component: CartPage ---
 const CartPage = () => {
     // Get state from contexts
-    const { cartItems, totalPrice, cartCount } = useCart();
+    const { cartItems, totalPrice, cartCount, addToCart } = useCart();
     const { selectedVehicle } = useVehicle();
 
     const shippingCost = totalPrice >= 140 ? 0 : 15.00; // Free shipping over $140
@@ -84,16 +84,31 @@ const CartPage = () => {
         return (
             <div className="container mx-auto px-4 py-16 text-center">
                 <h1 className="text-4xl font-extrabold text-gray-800 mb-4">Your Cart is Empty</h1>
-                <p className="text-lg text-gray-600 mb-8">Start shopping to find the perfect parts for your vehicle.</p>
-                <Link to="/" className="bg-red-600 text-white px-8 py-3 rounded-full font-bold uppercase hover:bg-red-700 transition-colors">
-                    Start Shopping
-                </Link>
+                <p className="text-lg text-gray-600 mb-8">Start shopping to find perfect parts for your vehicle.</p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <Link to="/" className="bg-red-600 text-white px-8 py-3 rounded-full font-bold uppercase hover:bg-red-700 transition-colors">
+                        Start Shopping
+                    </Link>
+                    <button 
+                        onClick={() => {
+                            // Add some demo products
+                            const demoProducts = [
+                                { _id: '1', name: 'Car Side View Mirror', price: 120, image: '/assets/default-part.jpg' },
+                                { _id: '2', name: 'Car Brake Pads', price: 85, image: '/assets/default-part.jpg' }
+                            ];
+                            demoProducts.forEach(product => addToCart(product, 1));
+                        }}
+                        className="bg-blue-600 text-white px-8 py-3 rounded-full font-bold uppercase hover:bg-blue-700 transition-colors"
+                    >
+                        Add Demo Products
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="cart-page container mx-auto px-4 py-8">
             <h1 className="text-4xl font-extrabold text-gray-900 mb-8 border-b-4 border-red-600 pb-2">
                 Your Shopping Cart ({cartCount} Items)
             </h1>

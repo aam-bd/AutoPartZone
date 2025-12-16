@@ -1,17 +1,23 @@
 import { defineConfig } from 'vite'
-import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+  plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom']
+        }
       }
     }
+  },
+  server: {
+    port: 5173,
+    host: true,
+    open: true,
+    hmr: {
+      overlay: false
+    }
   }
-})
+});

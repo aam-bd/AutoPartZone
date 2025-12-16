@@ -6,7 +6,11 @@ import './App.css';
 import Navbar from './Components/Navbar'; // Your design's full Header (Top Bar + Main Nav)
 import Footer from './Components/Footer'; // Your design's full Footer (Exclusive Section + Links)
 
+console.log('App component loading...');
+
 function App() {
+  console.log('App component rendering...');
+  
   return (
     <div className="app-layout">
       

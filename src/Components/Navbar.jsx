@@ -134,7 +134,7 @@ const Navbar = () => {
             {user ? (
               <div className="flex items-center gap-4">
                 <div className="text-right hidden lg:block">
-                  <p className="text-sm font-bold text-gray-900 leading-none">{user.displayName || "User"}</p>
+                  <p className="text-sm font-bold text-gray-900 leading-none">{user.name || "User"}</p>
                   <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
                 <div className="relative group cursor-pointer">
@@ -208,7 +208,7 @@ const Navbar = () => {
                     alt="Profile"
                   />
                   <div>
-                    <p className="text-sm font-bold">{user.displayName}</p>
+                    <p className="text-sm font-bold">{user.name || "User"}</p>
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
                 </div>
