@@ -162,3 +162,152 @@ export const getInvoice = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+// Get user's orders
+export const getUserOrders = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { page = 1, limit = 10, status, startDate, endDate } = req.query;
+    
+    // Build filter
+    const filter = { userId };
+    if (status) filter.status = status;
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (endDate) filter.createdAt.$lte = new Date(endDate);
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const [orders, total] = await Promise.all([
+      Order.find(filter)
+        .populate("items.productId", "name brand category images")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Order.countDocuments(filter)
+    ]);
+
+    res.json({
+      orders,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        total,
+        limit: parseInt(limit)
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Cancel order (customer)
+export const cancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const userId = req.user._id;
+
+    const order = await Order.findOne({ _id: id, userId });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.status !== 'processing') {
+      return res.status(400).json({ message: "Order cannot be cancelled" });
+    }
+
+    // Restore stock
+    for (const item of order.items) {
+      await Product.findByIdAndUpdate(item.productId, {
+        $inc: { stock: item.quantity || item.qty || 0 }
+      });
+    }
+
+    order.status = 'cancelled';
+    order.cancellationReason = reason;
+    order.cancelledAt = new Date();
+    await order.save();
+
+    res.json({ message: "Order cancelled", order });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Reorder items from previous order
+export const reorderItems = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    const order = await Order.findOne({ _id: id, userId });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Create new cart with reordered items
+    let cart = await Cart.findOne({ userId });
+    if (!cart) cart = new Cart({ userId, items: [] });
+
+    for (const item of order.items) {
+      const product = await Product.findById(item.productId);
+      if (!product || !product.isAvailable || product.stock === 0) {
+        continue; // Skip unavailable products
+      }
+
+      const existingItem = cart.items.find(cartItem => 
+        cartItem.productId.toString() === item.productId.toString()
+      );
+
+      if (existingItem) {
+        existingItem.qty = (existingItem.qty || 0) + (item.quantity || item.qty || 0);
+      } else {
+        cart.items.push({
+          productId: item.productId,
+          qty: item.quantity || item.qty || 0
+        });
+      }
+    }
+
+    await cart.save();
+    const populatedCart = await Cart.findById(cart._id).populate("items.productId");
+
+    res.json({ message: "Items added to cart", cart: populatedCart });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Get user order statistics
+export const getUserOrderStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    const stats = await Order.aggregate([
+      { $match: { userId } },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          totalSpent: { $sum: '$totalAmount' }
+        }
+      }
+    ]);
+
+    const totalOrders = stats.reduce((sum, stat) => sum + stat.count, 0);
+    const totalSpent = stats.reduce((sum, stat) => sum + stat.totalSpent, 0);
+    const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+
+    res.json({
+      totalOrders,
+      totalSpent,
+      avgOrderValue,
+      stats
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};

@@ -48,31 +48,74 @@ export const getProducts = async (req, res) => {
       return res.json(products);
     }
 
-    // Deduplicate by name+brand+make+model (case-insensitive). Return the newest document per group.
-    const products = await Product.aggregate([
-      { $match: { isAvailable: true } },
-      {
-        $addFields: {
-          _nameLower: { $toLower: { $ifNull: ["$name", ""] } },
-          _brandLower: { $toLower: { $ifNull: ["$brand", ""] } },
-          _makeLower: { $toLower: { $ifNull: ["$make", ""] } },
-          _modelLower: { $toLower: { $ifNull: ["$model", ""] } },
-        },
-      },
-      {
-        $sort: { _nameLower: 1, _brandLower: 1, _makeLower: 1, _modelLower: 1, createdAt: -1 }
-      },
-      {
-        $group: {
-          _id: { name: "$_nameLower", brand: "$_brandLower", make: "$_makeLower", model: "$_modelLower" },
-          doc: { $first: "$$ROOT" }
-        }
-      },
-      { $replaceRoot: { newRoot: "$doc" } },
-      { $project: { _nameLower: 0, _brandLower: 0, _makeLower: 0, _modelLower: 0 } }
+    // Get all filter parameters
+    const { 
+      q: query,
+      category,
+      brand,
+      minPrice,
+      maxPrice,
+      page = 1,
+      limit = 20,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      inStock = true
+    } = req.query;
+
+    // Build search criteria
+    const searchCriteria = { isAvailable: true };
+    
+    if (query) {
+      searchCriteria.$or = [
+        { name: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } },
+        { brand: { $regex: query, $options: 'i' } },
+        { category: { $regex: query, $options: 'i' } }
+      ];
+    }
+    
+    if (category) {
+      searchCriteria.category = category;
+    }
+    
+    if (brand) {
+      searchCriteria.brand = brand;
+    }
+    
+    if (minPrice || maxPrice) {
+      searchCriteria.price = {};
+      if (minPrice) searchCriteria.price.$gte = parseFloat(minPrice);
+      if (maxPrice) searchCriteria.price.$lte = parseFloat(maxPrice);
+    }
+    
+    if (inStock === 'true') {
+      searchCriteria.stock = { $gt: 0 };
+    }
+
+    // Build sort criteria
+    const sortCriteria = {};
+    sortCriteria[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    // Execute query with pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const [products, total] = await Promise.all([
+      Product.find(searchCriteria)
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Product.countDocuments(searchCriteria)
     ]);
 
-    res.json(products);
+    res.json({
+      products,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        total,
+        limit: parseInt(limit)
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
@@ -82,7 +125,7 @@ export const removeProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Hard delete the document when id matches
+    // Hard delete document when id matches
     const deleted = await Product.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ message: "Product not found" });
 
@@ -98,6 +141,74 @@ export const getProductById = async (req, res) => {
     const product = await Product.findById(id);
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Get featured products
+export const getFeaturedProducts = async (req, res) => {
+  try {
+    const { type } = req.params;
+    let query = { isAvailable: true };
+    
+    // For flash sales, we'll simulate with recent products (you can add discount field later)
+    if (type === 'flash-sale') {
+      // Get recently added products as "flash sales"
+      query.createdAt = { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
+    }
+    
+    const products = await Product.find(query)
+      .sort(type === 'flash-sale' ? { createdAt: -1 } : { stock: -1 })
+      .limit(12);
+    
+    res.json({ products });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Get product categories
+export const getCategories = async (req, res) => {
+  try {
+    const categories = await Product.distinct('category', { isAvailable: true });
+    res.json({ categories });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Get product brands
+export const getBrands = async (req, res) => {
+  try {
+    const brands = await Product.distinct('brand', { isAvailable: true });
+    res.json({ brands });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Get related products
+export const getRelatedProducts = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 8 } = req.query;
+    
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    
+    // Find products in same category, excluding current product
+    const relatedProducts = await Product.find({
+      _id: { $ne: id },
+      category: product.category,
+      isAvailable: true,
+      stock: { $gt: 0 }
+    })
+    .limit(parseInt(limit));
+    
+    res.json({ products: relatedProducts });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }

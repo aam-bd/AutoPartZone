@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import AuditLog from "../models/AuditLog.js";
 
 // REGISTER USER
 export const register = async (req, res) => {
@@ -24,6 +25,18 @@ export const register = async (req, res) => {
       expiresIn: "1d",
     });
 
+    // Audit log
+    await AuditLog.create({
+      userId: user._id,
+      action: 'REGISTER',
+      resource: 'User',
+      resourceId: user._id,
+      details: { name, email, role: user.role },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent'),
+      success: true
+    });
+
     res.json({
       message: "User registered",
       token,
@@ -35,6 +48,20 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
+    // Audit log for failed registration
+    if (req.body.email) {
+      await AuditLog.create({
+        userId: null,
+        action: 'REGISTER',
+        resource: 'User',
+        details: { email: req.body.email, error: error.message },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        success: false,
+        errorMessage: error.message
+      }).catch(() => {});
+    }
+    
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -48,15 +75,43 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Compare password (THIS WAS YOUR MAIN ISSUE)
-    const isMatch = await bcrypt.compare(password, user.password);
-    console.log("Password match:", isMatch);
+    // Check if account is locked
+    if (user.isLocked) {
+      return res.status(423).json({ 
+        message: "Account is locked due to too many failed login attempts. Try again later." 
+      });
+    }
 
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    // Check if account is active
+    if (!user.isActive) {
+      return res.status(403).json({ message: "Account is deactivated" });
+    }
+
+    // Compare password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      // Increment login attempts
+      await user.incLoginAttempts();
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Reset login attempts on successful login
+    await user.resetLoginAttempts();
 
     // Create token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
+    });
+
+    // Audit log for successful login
+    await AuditLog.create({
+      userId: user._id,
+      action: 'LOGIN',
+      resource: 'Auth',
+      details: { email },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent'),
+      success: true
     });
 
     res.json({
@@ -67,7 +122,154 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        isEmailVerified: user.isEmailVerified,
       },
+    });
+  } catch (error) {
+    // Audit log for failed login
+    if (req.body.email) {
+      await AuditLog.create({
+        userId: null,
+        action: 'LOGIN',
+        resource: 'Auth',
+        details: { email: req.body.email, error: error.message },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        success: false,
+        errorMessage: error.message
+      }).catch(() => {});
+    }
+    
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// FORGOT PASSWORD
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Generate reset token
+    const resetToken = user.generatePasswordResetToken();
+    await user.save();
+
+    // TODO: Send email with reset token
+    // For now, just return the token (in production, this should be sent via email)
+    res.json({
+      message: "Password reset token generated",
+      resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// RESET PASSWORD
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    const user = await User.findOne({
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    // Update password
+    user.password = newPassword;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
+    
+    await user.save();
+
+    res.json({ message: "Password reset successful" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// VERIFY EMAIL
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired verification token" });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+    
+    await user.save();
+
+    res.json({ message: "Email verified successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// GET PROFILE
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// UPDATE PROFILE
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, phone, address, preferences } = req.body;
+    
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update allowed fields
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+    if (address) user.address = { ...user.address, ...address };
+    if (preferences) user.preferences = { ...user.preferences, ...preferences };
+
+    await user.save();
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        address: user.address,
+        preferences: user.preferences,
+        isEmailVerified: user.isEmailVerified,
+      }
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
