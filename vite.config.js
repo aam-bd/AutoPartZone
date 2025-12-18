@@ -18,6 +18,13 @@ export default defineConfig({
     open: true,
     hmr: {
       overlay: false
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5003',
+        changeOrigin: true,
+        secure: false,
+      }
     }
   }
 });

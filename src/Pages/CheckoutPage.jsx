@@ -284,8 +284,8 @@ export default function CheckoutPage() {
             
             {/* Order Items */}
             <div className="space-y-3 mb-4">
-              {cartItems.map(item => (
-                <div key={item.id} className="flex justify-between text-sm">
+              {cartItems.map((item, index) => (
+                <div key={`checkout-item-${item.id}-${index}`} className="flex justify-between text-sm">
                   <span>{item.name} x {item.quantity}</span>
                   <span>৳{(item.price * item.quantity).toFixed(2)}</span>
                 </div>

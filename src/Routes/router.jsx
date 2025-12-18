@@ -18,6 +18,7 @@ import ShopPage from "../Pages/ShopPage"; // **NEW: Assuming you create this pag
 import AdminDashboard from "../Pages/AdminDashboard.jsx"; // **NEW: Admin Dashboard**
 import ReportsDashboard from "../Pages/ReportsDashboard.jsx"; // **NEW: Reports Dashboard**
 import OrderHistory from "../Pages/OrderHistory.jsx"; // **NEW: Order History**
+import ProfilePage from "../Pages/ProfilePage.jsx"; // **NEW: Profile Page**
 
 import AboutPage from "../Pages/About";
 const router = createBrowserRouter([
@@ -62,8 +63,12 @@ const router = createBrowserRouter([
         element: <CategoryPage />,
       },
       {
-        path: "admin/dashboard",
+        path: "admin",
         element: <AdminDashboard />,
+      },
+      {
+        path: "profile",
+        element: <ProfilePage />,
       },
       {
         path: "admin/reports",

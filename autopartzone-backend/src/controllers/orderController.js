@@ -25,7 +25,7 @@ export const placeOrder = async (req, res) => {
       itemsToOrder = cart.items.map(i => ({ productId: i.productId, quantity: Number(i.qty ?? i.quantity ?? 0) }));
     }
 
-    // Validate items and adjust stock
+    // Validate items and check stock availability
     let subtotal = 0;
     for (const item of itemsToOrder) {
       if (!item.productId) return res.status(400).json({ message: "Invalid product id in items" });
@@ -36,11 +36,29 @@ export const placeOrder = async (req, res) => {
       const itemQty = item.quantity;
       if (itemQty <= 0) return res.status(400).json({ message: `Invalid quantity for product ${product.name || product._id}` });
       if (product.stock < itemQty) {
-        return res.status(400).json({ message: `Insufficient stock for ${product.name || product._id}` });
+        return res.status(400).json({ message: `Insufficient stock for ${product.name || product._id}. Available: ${product.stock}` });
       }
       subtotal += (product.price || 0) * itemQty;
-      product.stock -= itemQty;
-      await product.save();
+    }
+
+    // Atomic stock reduction to prevent overselling
+    const stockUpdates = itemsToOrder.map(item => ({
+      updateOne: {
+        filter: { 
+          _id: item.productId, 
+          stock: { $gte: item.quantity } 
+        },
+        update: { $inc: { stock: -item.quantity } }
+      }
+    }));
+
+    const stockResult = await Product.bulkWrite(stockUpdates);
+    
+    // Check if all updates were successful
+    if (stockResult.modifiedCount !== itemsToOrder.length) {
+      return res.status(400).json({ 
+        message: "Some items became unavailable. Please check stock and try again." 
+      });
     }
 
     const tax = +(subtotal * 0.05).toFixed(2); // 5% tax
@@ -100,15 +118,19 @@ export const updateStatus = async (req, res) => {
 
     order.status = status;
 
-    // Restore stock if cancelled
-    if (status === "cancelled") {
-      for (const item of order.items) {
-        const product = await Product.findById(item.productId);
-        if (product) {
-          product.stock += item.quantity;
-          await product.save();
+    // Restore stock if cancelled (atomic operation)
+    if (status === "cancelled" && order.status !== "cancelled") {
+      const stockRestoreUpdates = order.items.map(item => ({
+        updateOne: {
+          filter: { _id: item.productId },
+          update: { $inc: { stock: item.quantity || item.qty || 0 } }
         }
-      }
+      }));
+
+      const restoreResult = await Product.bulkWrite(stockRestoreUpdates);
+      
+      // Log the restoration
+      console.log(`Stock restored for order ${order._id}: ${restoreResult.modifiedCount} items updated`);
     }
 
     await order.save();
@@ -219,12 +241,15 @@ export const cancelOrder = async (req, res) => {
       return res.status(400).json({ message: "Order cannot be cancelled" });
     }
 
-    // Restore stock
-    for (const item of order.items) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { stock: item.quantity || item.qty || 0 }
-      });
-    }
+    // Atomic stock restoration
+    const stockRestoreUpdates = order.items.map(item => ({
+      updateOne: {
+        filter: { _id: item.productId },
+        update: { $inc: { stock: item.quantity || item.qty || 0 } }
+      }
+    }));
+
+    await Product.bulkWrite(stockRestoreUpdates);
 
     order.status = 'cancelled';
     order.cancellationReason = reason;

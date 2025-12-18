@@ -94,9 +94,9 @@ const ProductGridSection = ({ title, products, showTimer, sectionLink }) => {
 
             {/* Product Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {products.map(product => (
+                {products.map((product, index) => (
                     <ProductCard 
-                        key={product.id} 
+                        key={`product-${product.id}-${index}`} 
                         product={product} 
                         // You can pass specific props here if needed
                     />

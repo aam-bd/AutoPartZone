@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 // import mongoSanitize from "express-mongo-sanitize";
 // import xss from "xss-clean";
 import connectDB from "./config/db.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
@@ -59,15 +60,23 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 connectDB();
 
 // Routes
-app.use("/auth", authRoutes);
-app.use("/products", productRoutes);
-app.use("/products", stockRoutes);
-app.use("/search", searchRoutes);
-app.use("/cart", cartRoutes);
-app.use("/orders", orderRoutes);
-app.use("/recommend", recommendRoutes);
-app.use("/analytics", analyticsRoutes);
-app.use("/payment", paymentRoutes);
-app.use("/reports", reportRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/stock", stockRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/recommend", recommendRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/products", productRoutes);
+
+// Health check endpoint
+app.get("/", (req, res) => {
+  res.json({ message: "AutoPartZone API Server", version: "1.0.0", timestamp: new Date().toISOString() });
+});
+
+// Error handling middleware
+app.use(errorHandler);
 
 export default app;

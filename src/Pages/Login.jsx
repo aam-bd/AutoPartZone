@@ -12,6 +12,7 @@ const Login = () => {
   const { login } = useAuth(); // 2. Get the login function
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("signin");
+  const [showAdminRegister, setShowAdminRegister] = useState(false);
   const [message, setMessage] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -19,6 +20,8 @@ const Login = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    adminKey: "",
+    name: "",
   });
 
   // --- ANIMATION DATA ---
@@ -37,41 +40,109 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    // 3. Make this async
+  const handleAdminRegister = async (e) => {
     e.preventDefault();
     setMessage(null);
 
     try {
+      if (!formData.adminKey || !formData.name || !formData.email || !formData.password) {
+        setMessage({ type: "error", text: "Please fill in all fields" });
+        return;
+      }
+
+      console.log("Attempting admin registration with:", { 
+        name: formData.name, 
+        email: formData.email, 
+        password: formData.password,
+        adminKey: formData.adminKey 
+      });
+      
+      const requestBody = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        adminKey: formData.adminKey,
+      };
+      
+      console.log("Request body:", JSON.stringify(requestBody));
+      
+      const response = await fetch("/api/auth/register-admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("Admin response status:", response.status);
+      console.log("Admin response headers:", response.headers);
+      
+      const data = await response.json();
+      console.log("Admin response data:", data);
+
+      if (!response.ok) {
+        console.error("Admin registration failed:", response.status, response.statusText);
+        setMessage({ type: "error", text: data.message || "Admin registration failed" });
+        return;
+      }
+
+      login(data.user, data.token);
+      setMessage({ type: "success", text: "Admin registration successful! Redirecting to dashboard..." });
+      
+      setTimeout(() => {
+        navigate("/admin");
+      }, 1500);
+
+    } catch (err) {
+      console.error("Admin registration error:", err);
+      setMessage({ type: "error", text: err.message || "Network error. Please try again." });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage(null);
+
+    try {
+      if (activeTab === "admin") {
+        // Admin registration is handled separately
+        return;
+      }
+
       if (activeTab === "signin") {
-        // Mock login - accept any email/password for demo
+        // Real API login
         if (!formData.email || !formData.password) {
           setMessage({ type: "error", text: "Please fill in all fields" });
           return;
         }
 
-        // Check for admin access
-        const isAdmin = formData.email.includes('admin') || formData.username === 'admin';
-        
-        // Create mock user data
-        const mockUser = {
-          _id: 'user-' + Date.now(),
-          name: formData.username || formData.email.split('@')[0],
-          email: formData.email,
-          role: isAdmin ? "admin" : "customer"
-        };
-        
-        const mockToken = 'mock-token-' + Date.now();
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
 
-        // 4. USE THE CONTEXT LOGIN
-        login(mockUser, mockToken);
+        const data = await response.json();
 
-        const successMessage = isAdmin 
+        if (!response.ok) {
+          setMessage({ type: "error", text: data.message || "Login failed" });
+          return;
+        }
+
+        // Use context login with real data
+        login(data.user, data.token);
+
+        const successMessage = data.user.role === "admin" 
           ? "Admin login successful! Welcome to Admin Dashboard."
           : "Login successful! Welcome to AutoPartZone.";
         setMessage({ type: "success", text: successMessage });
         
-        if (isAdmin) {
+        if (data.user.role === "admin") {
           navigate("/admin");
         } else {
           navigate("/");
@@ -88,24 +159,71 @@ const Login = () => {
           return;
         }
 
-        // Create mock user data
-        const mockUser = {
-          _id: 'user-' + Date.now(),
-          name: formData.username,
-          email: formData.email,
-          role: "customer"
-        };
+        console.log("Attempting registration with:", { name: formData.username, email: formData.email });
         
-        const mockToken = 'mock-token-' + Date.now();
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: formData.username,
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
 
-        // 5. USE THE CONTEXT LOGIN HERE TOO
-        login(mockUser, mockToken);
+        console.log("Response status:", response.status);
+        
+        const data = await response.json();
+        console.log("Response data:", data);
+
+        if (!response.ok) {
+          setMessage({ type: "error", text: data.message || "Registration failed" });
+          return;
+        }
+
+        // Use context login with real data
+        login(data.user, data.token);
 
         setMessage({ type: "success", text: "Registration successful" });
         navigate("/");
       }
     } catch (err) {
-      setMessage({ type: "error", text: err.message });
+      console.error("Registration error:", err);
+      setMessage({ type: "error", text: err.message || "Network error. Please try again." });
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    
+    const email = prompt("Please enter your email address for password reset:");
+    if (!email) return;
+
+    try {
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Failed to send password reset email");
+        return;
+      }
+
+      alert("Password reset instructions have been sent to your email (check console for token in development)");
+      if (data.resetToken) {
+        console.log("Password reset token (development):", data.resetToken);
+      }
+    } catch (err) {
+      console.error("Forgot password error:", err);
+      alert("Network error. Please try again.");
     }
   };
 
@@ -204,8 +322,8 @@ const Login = () => {
         {/* TAB HEADERS */}
         <div className="flex w-full cursor-pointer">
           <div
-            onClick={() => setActiveTab("signin")}
-            className={`flex-1 p-4 text-center text-xl font-semibold transition-colors duration-200 ${
+            onClick={() => { setActiveTab("signin"); setShowAdminRegister(false); }}
+            className={`flex-1 p-4 text-center text-xl font-semibold transition-colors ${
               activeTab === "signin"
                 ? "bg-white/40 text-[#8f2c24]"
                 : "bg-transparent text-white hover:bg-white/10"
@@ -214,14 +332,24 @@ const Login = () => {
             Sign In
           </div>
           <div
-            onClick={() => setActiveTab("signup")}
-            className={`flex-1 p-4 text-center text-xl font-semibold transition-colors duration-200 ${
+            onClick={() => { setActiveTab("signup"); setShowAdminRegister(false); }}
+            className={`flex-1 p-4 text-center text-xl font-semibold transition-colors ${
               activeTab === "signup"
                 ? "bg-white/40 text-[#8f2c24]"
                 : "bg-transparent text-white hover:bg-white/10"
             }`}
           >
             Sign Up
+          </div>
+          <div
+            onClick={() => { setActiveTab("admin"); setShowAdminRegister(true); }}
+            className={`flex-1 p-4 text-center text-xl font-semibold transition-colors ${
+              activeTab === "admin"
+                ? "bg-white/40 text-[#8f2c24]"
+                : "bg-transparent text-white hover:bg-white/10"
+            }`}
+          >
+            Admin
           </div>
         </div>
 
@@ -231,7 +359,8 @@ const Login = () => {
           className="p-[40px_60px_60px_60px] flex flex-col gap-[25px]"
         >
           <h2 className="relative w-full text-center text-[2.5rem] font-semibold text-[#8f2c24] mb-[5px]">
-            {activeTab === "signin" ? "Welcome Back" : "Create Account"}
+            {activeTab === "admin" ? "Admin Registration" : 
+             activeTab === "signin" ? "Welcome Back" : "Create Account"}
           </h2>
 
           {message && (
@@ -246,7 +375,58 @@ const Login = () => {
             </div>
           )}
 
-          {activeTab === "signin" ? (
+          {activeTab === "admin" ? (
+            <>
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  name="adminKey"
+                  placeholder="Admin Registration Key"
+                  value={formData.adminKey || ""}
+                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Admin Name"
+                  value={formData.name || ""}
+                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="relative w-full">
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Admin Email"
+                  value={formData.email || ""}
+                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="relative w-full">
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Admin Password"
+                  value={formData.password || ""}
+                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                  onChange={handleInputChange}
+                  required
+                  formNoValidate
+                />
+              </div>
+            </>
+          ) : activeTab === "signin" ? (
             <div className="relative w-full">
               <input
                 type="email"
@@ -295,6 +475,7 @@ const Login = () => {
               className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
               onChange={handleInputChange}
               required
+              formNoValidate
             />
           </div>
 
@@ -308,47 +489,48 @@ const Login = () => {
                 className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
                 onChange={handleInputChange}
                 required
+                formNoValidate
               />
             </div>
           )}
 
           <div className="relative w-full mt-2">
             <button
-              type="submit"
+              type={activeTab === "admin" ? "button" : "submit"}
+              onClick={activeTab === "admin" ? handleAdminRegister : undefined}
               className="w-full p-[15px_20px] text-[1.25rem] text-white rounded-[5px] bg-[#8f2c24] border-none cursor-pointer hover:bg-[#d64c42] font-medium shadow-md transition-all active:scale-95"
             >
-              {activeTab === "signin" ? "Login" : "Register"}
+              {activeTab === "admin" ? "Register as Admin" : 
+               activeTab === "signin" ? "Login" : "Register"}
             </button>
           </div>
 
           <div className="flex justify-between items-center">
-            {activeTab === "signin" ? (
+            {activeTab !== "admin" && (
               <>
-                <a
-                  href="#"
-                  className="text-[1.1rem] text-[#ffffff] font-medium no-underline hover:text-[#d64c42]"
-                >
-                  Forgot Password?
-                </a>
+                {activeTab === "signin" && (
+                  <button
+                    onClick={handleForgotPassword}
+                    className="text-[1.1rem] text-[#ffffff] font-medium no-underline hover:text-[#d64c42] bg-transparent border-none cursor-pointer"
+                  >
+                    Forgot Password?
+                  </button>
+                )}
+                {activeTab !== "signin" && (
+                  <span
+                    onClick={() => setActiveTab("signin")}
+                    className="text-[1.1rem] text-[#8f2c24] font-bold cursor-pointer hover:text-[#d64c42] bg-white/60 px-2 py-1 rounded ml-2"
+                  >
+                    Sign In
+                  </span>
+                )}
                 <span
-                  onClick={() => setActiveTab("signup")}
+                  onClick={() => activeTab === "signin" ? setActiveTab("signup") : setActiveTab("signin")}
                   className="text-[1.1rem] text-[#ffffff] font-medium cursor-pointer hover:text-[#d64c42]"
                 >
-                  Sign up
+                  {activeTab === "signin" ? "Sign up" : "Sign in"}
                 </span>
               </>
-            ) : (
-              <div className="w-full text-center">
-                <span className="text-white text-[1.1rem]">
-                  Already have an account?{" "}
-                </span>
-                <span
-                  onClick={() => setActiveTab("signin")}
-                  className="text-[1.1rem] text-[#8f2c24] font-bold cursor-pointer hover:text-[#d64c42] bg-white/60 px-2 py-1 rounded ml-2"
-                >
-                  Sign In
-                </span>
-              </div>
             )}
           </div>
         </form>

@@ -25,8 +25,8 @@ export const register = async (req, res) => {
       expiresIn: "1d",
     });
 
-    // Audit log
-    await AuditLog.create({
+    // Audit log - temporarily disabled for debugging
+    /* await AuditLog.create({
       userId: user._id,
       action: 'REGISTER',
       resource: 'User',
@@ -35,7 +35,7 @@ export const register = async (req, res) => {
       ipAddress: req.ip,
       userAgent: req.get('User-Agent'),
       success: true
-    });
+    }); */
 
     res.json({
       message: "User registered",
@@ -48,19 +48,8 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    // Audit log for failed registration
-    if (req.body.email) {
-      await AuditLog.create({
-        userId: null,
-        action: 'REGISTER',
-        resource: 'User',
-        details: { email: req.body.email, error: error.message },
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent'),
-        success: false,
-        errorMessage: error.message
-      }).catch(() => {});
-    }
+    console.error("Registration error details:", error);
+    console.error("Error stack:", error.stack);
     
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -103,8 +92,8 @@ export const login = async (req, res) => {
       expiresIn: "1d",
     });
 
-    // Audit log for successful login
-    await AuditLog.create({
+    // Audit log for successful login - temporarily disabled
+    /* await AuditLog.create({
       userId: user._id,
       action: 'LOGIN',
       resource: 'Auth',
@@ -112,7 +101,7 @@ export const login = async (req, res) => {
       ipAddress: req.ip,
       userAgent: req.get('User-Agent'),
       success: true
-    });
+    }); */
 
     res.json({
       message: "Login successful",
@@ -126,8 +115,8 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    // Audit log for failed login
-    if (req.body.email) {
+    // Audit log for failed login - temporarily disabled
+    /* if (req.body.email) {
       await AuditLog.create({
         userId: null,
         action: 'LOGIN',
@@ -138,7 +127,7 @@ export const login = async (req, res) => {
         success: false,
         errorMessage: error.message
       }).catch(() => {});
-    }
+    } */
     
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -172,7 +161,8 @@ export const forgotPassword = async (req, res) => {
 // RESET PASSWORD
 export const resetPassword = async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
+    const { token } = req.params;
+    const { newPassword } = req.body;
 
     const user = await User.findOne({
       passwordResetToken: token,

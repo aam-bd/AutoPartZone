@@ -131,8 +131,35 @@ const Navbar = () => {
 
           {/* --- RIGHT SIDE: USER PROFILE / LOGIN --- */}
           <div className="hidden md:flex items-center space-x-4">
-            {user ? (
+          {user ? (
               <div className="flex items-center gap-4">
+                <NavLink
+                  to="/profile"
+                  className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                >
+                  <div className="p-[2px] rounded-full border-2" style={{ borderColor: brandColor }}>
+                    <img
+                      className="h-6 w-6 rounded-full object-cover"
+                      src={user.photoURL || noprofile}
+                      alt="Profile"
+                      onError={(e) => (e.target.src = noprofile)}
+                    />
+                  </div>
+                  <span>Profile</span>
+                </NavLink>
+                
+                {user.role === 'admin' && (
+                  <NavLink
+                    to="/admin"
+                    className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5M15 19.128a9.019 9.019 0 00-2.25 1.394m-4.5 0A9.02 9.02 0 016 19.128m9.75 0a9.02 9.02 0 002.25-1.394" />
+                    </svg>
+                    <span>Dashboard</span>
+                  </NavLink>
+                )}
+                
                 <div className="text-right hidden lg:block">
                   <p className="text-sm font-bold text-gray-900 leading-none">{user.name || "User"}</p>
                   <p className="text-xs text-gray-500">{user.email}</p>
@@ -200,8 +227,12 @@ const Navbar = () => {
 
           <div className="pt-4 border-t border-gray-100">
             {user ? (
-              <div className="flex items-center justify-between px-4">
-                <div className="flex items-center gap-3">
+              <div>
+                <NavLink
+                  to="/profile"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+                >
                   <img
                     src={user.photoURL || noprofile}
                     className="h-10 w-10 rounded-full object-cover"
@@ -211,9 +242,24 @@ const Navbar = () => {
                     <p className="text-sm font-bold">{user.name || "User"}</p>
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
-                </div>
-                <button onClick={handleLogout} className="p-2 text-gray-500 hover:text-[#90281F]">
+                </NavLink>
+                
+                {user.role === 'admin' && (
+                  <NavLink
+                    to="/admin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5M15 19.128a9.019 9.019 0 00-2.25 1.394m-4.5 0A9.02 9.02 0 016 19.128m9.75 0a9.02 9.02 0 002.25-1.394" />
+                    </svg>
+                    <span>Admin Dashboard</span>
+                  </NavLink>
+                )}
+                
+                <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-red-600 hover:bg-red-50 w-full">
                   <LogoutIcon />
+                  <span>Logout</span>
                 </button>
               </div>
             ) : (

@@ -128,8 +128,8 @@ const CartPage = () => {
                     </div>
 
                     {/* Item List */}
-                    {cartItems.map(item => (
-                        <CartItem key={item.id} item={item} />
+                    {cartItems.map((item, index) => (
+                        <CartItem key={`cart-item-${item.id}-${index}`} item={item} />
                     ))}
                 </div>
 
