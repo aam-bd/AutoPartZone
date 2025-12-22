@@ -9,7 +9,7 @@ import car from "../assets/car_transparent.gif";
 import { Link } from "react-router-dom";
 
 const Login = () => {
-  const { login } = useAuth(); // 2. Get the login function
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("signin");
   const [showAdminRegister, setShowAdminRegister] = useState(false);
@@ -24,7 +24,6 @@ const Login = () => {
     name: "",
   });
 
-  // --- ANIMATION DATA ---
   const leaves = [
     { left: "20%", duration: "20s", delay: "0s" },
     { left: "50%", duration: "14s", delay: "0s" },
@@ -50,38 +49,22 @@ const Login = () => {
         return;
       }
 
-      console.log("Attempting admin registration with:", { 
-        name: formData.name, 
-        email: formData.email, 
-        password: formData.password,
-        adminKey: formData.adminKey 
-      });
-      
-      const requestBody = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        adminKey: formData.adminKey,
-      };
-      
-      console.log("Request body:", JSON.stringify(requestBody));
-      
       const response = await fetch("/api/auth/register-admin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          adminKey: formData.adminKey,
+        }),
       });
 
-      console.log("Admin response status:", response.status);
-      console.log("Admin response headers:", response.headers);
-      
       const data = await response.json();
-      console.log("Admin response data:", data);
 
       if (!response.ok) {
-        console.error("Admin registration failed:", response.status, response.statusText);
         setMessage({ type: "error", text: data.message || "Admin registration failed" });
         return;
       }
@@ -95,7 +78,7 @@ const Login = () => {
 
     } catch (err) {
       console.error("Admin registration error:", err);
-      setMessage({ type: "error", text: err.message || "Network error. Please try again." });
+      setMessage({ type: "error", text: "Network error. Please try again." });
     }
   };
 
@@ -104,13 +87,7 @@ const Login = () => {
     setMessage(null);
 
     try {
-      if (activeTab === "admin") {
-        // Admin registration is handled separately
-        return;
-      }
-
       if (activeTab === "signin") {
-        // Real API login
         if (!formData.email || !formData.password) {
           setMessage({ type: "error", text: "Please fill in all fields" });
           return;
@@ -134,7 +111,6 @@ const Login = () => {
           return;
         }
 
-        // Use context login with real data
         login(data.user, data.token);
 
         const successMessage = data.user.role === "admin" 
@@ -148,7 +124,6 @@ const Login = () => {
           navigate("/");
         }
       } else {
-        // Sign up: ensure passwords match
         if (formData.password !== formData.confirmPassword) {
           setMessage({ type: "error", text: "Passwords do not match" });
           return;
@@ -158,8 +133,6 @@ const Login = () => {
           setMessage({ type: "error", text: "Please fill in all fields" });
           return;
         }
-
-        console.log("Attempting registration with:", { name: formData.username, email: formData.email });
         
         const response = await fetch("/api/auth/register", {
           method: "POST",
@@ -173,25 +146,20 @@ const Login = () => {
           }),
         });
 
-        console.log("Response status:", response.status);
-        
         const data = await response.json();
-        console.log("Response data:", data);
 
         if (!response.ok) {
           setMessage({ type: "error", text: data.message || "Registration failed" });
           return;
         }
 
-        // Use context login with real data
         login(data.user, data.token);
-
         setMessage({ type: "success", text: "Registration successful" });
         navigate("/");
       }
     } catch (err) {
       console.error("Registration error:", err);
-      setMessage({ type: "error", text: err.message || "Network error. Please try again." });
+      setMessage({ type: "error", text: "Network error. Please try again." });
     }
   };
 
@@ -217,10 +185,7 @@ const Login = () => {
         return;
       }
 
-      alert("Password reset instructions have been sent to your email (check console for token in development)");
-      if (data.resetToken) {
-        console.log("Password reset token (development):", data.resetToken);
-      }
+      alert("Password reset instructions have been sent to your email");
     } catch (err) {
       console.error("Forgot password error:", err);
       alert("Network error. Please try again.");
@@ -231,10 +196,26 @@ const Login = () => {
     <div className="relative flex justify-center items-center w-full min-h-screen overflow-hidden">
       <style>{`        
         @keyframes animateGirl {
-          0% { transform: translateX(calc(-100% - 100vw)); }
-          50% { transform: translateX(calc(100% + 100vw)); }
-          50.01% { transform: translateX(calc(100% + 100vw)) rotateY(180deg); }
-          100% { transform: translateX(calc(-100% - 100vw)) rotateY(180deg); }
+          0% { 
+            left: -300px; 
+            transform: scaleX(1); 
+          }
+          49% { 
+            left: calc(100vw + 300px); 
+            transform: scaleX(1); 
+          }
+          50% { 
+            left: calc(100vw + 300px); 
+            transform: scaleX(-1); 
+          }
+          99% { 
+            left: -300px; 
+            transform: scaleX(-1); 
+          }
+          100% { 
+            left: -300px; 
+            transform: scaleX(1); 
+          }
         }
 
         @keyframes animateLeaf {
@@ -270,7 +251,6 @@ const Login = () => {
             <HelpCircle className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" />
           </div>
 
-          {/* Tooltip */}
           <div className="absolute right-full top-1/2 transform -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
             <div className="bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
               <div className="text-sm font-medium">Need Help?</div>
@@ -305,11 +285,20 @@ const Login = () => {
         </div>
       </div>
 
-      <img
-        src={car}
-        alt="car"
-        className="absolute top-[150px] scale-[0.65] animate-[animateGirl_12s_linear_infinite] pointer-events-none z-[5]"
-      />
+      {/* Fixed vehicle animation - positioned lower right at the road */}
+      <div
+        className="absolute bottom-[18%] scale-[0.65] animate-[animateGirl_12s_linear_infinite] pointer-events-none z-[5]"
+        style={{
+          transform: "translateX(calc(100vw - 100%))",
+          position: 'absolute',
+        }}
+      >
+        <img
+          src={car}
+          alt="car"
+          className="w-auto h-auto"
+        />
+      </div>
 
       <img
         src="https://i.ibb.co/QrMyLYc/trees.png"
@@ -323,30 +312,30 @@ const Login = () => {
         <div className="flex w-full cursor-pointer">
           <div
             onClick={() => { setActiveTab("signin"); setShowAdminRegister(false); }}
-            className={`flex-1 p-4 text-center text-xl font-semibold transition-colors ${
+            className={`flex-1 p-4 text-center text-xl font-bold transition-all ${
               activeTab === "signin"
-                ? "bg-white/40 text-[#8f2c24]"
-                : "bg-transparent text-white hover:bg-white/10"
+                ? "bg-white/60 text-[#8f2c24] shadow-md"
+                : "bg-transparent text-gray-800 hover:bg-white/10"
             }`}
           >
             Sign In
           </div>
           <div
             onClick={() => { setActiveTab("signup"); setShowAdminRegister(false); }}
-            className={`flex-1 p-4 text-center text-xl font-semibold transition-colors ${
+            className={`flex-1 p-4 text-center text-xl font-bold transition-all ${
               activeTab === "signup"
-                ? "bg-white/40 text-[#8f2c24]"
-                : "bg-transparent text-white hover:bg-white/10"
+                ? "bg-white/60 text-[#8f2c24] shadow-md"
+                : "bg-transparent text-gray-800 hover:bg-white/10"
             }`}
           >
             Sign Up
           </div>
           <div
             onClick={() => { setActiveTab("admin"); setShowAdminRegister(true); }}
-            className={`flex-1 p-4 text-center text-xl font-semibold transition-colors ${
+            className={`flex-1 p-4 text-center text-xl font-bold transition-all ${
               activeTab === "admin"
-                ? "bg-white/40 text-[#8f2c24]"
-                : "bg-transparent text-white hover:bg-white/10"
+                ? "bg-white/60 text-[#8f2c24] shadow-md"
+                : "bg-transparent text-gray-800 hover:bg-white/10"
             }`}
           >
             Admin
@@ -365,11 +354,12 @@ const Login = () => {
 
           {message && (
             <div
-              className={`w-full p-3 rounded text-sm ${
+              className={`w-full p-3 rounded text-sm font-bold shadow-lg ${
                 message.type === "error"
-                  ? "bg-red-100/80 text-red-800"
-                  : "bg-green-100/80 text-green-800"
+                  ? "bg-red-600 text-white"
+                  : "bg-green-600 text-white"
               }`}
+              style={{ opacity: 1 }}
             >
               {message.text}
             </div>
@@ -383,7 +373,7 @@ const Login = () => {
                   name="adminKey"
                   placeholder="Admin Registration Key"
                   value={formData.adminKey || ""}
-                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-gray-800 rounded-[5px] bg-white border-none placeholder:text-gray-500"
                   onChange={handleInputChange}
                   required
                 />
@@ -395,7 +385,7 @@ const Login = () => {
                   name="name"
                   placeholder="Admin Name"
                   value={formData.name || ""}
-                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-gray-800 rounded-[5px] bg-white border-none placeholder:text-gray-500"
                   onChange={handleInputChange}
                   required
                 />
@@ -407,7 +397,7 @@ const Login = () => {
                   name="email"
                   placeholder="Admin Email"
                   value={formData.email || ""}
-                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-gray-800 rounded-[5px] bg-white border-none placeholder:text-gray-500"
                   onChange={handleInputChange}
                   required
                 />
@@ -419,7 +409,7 @@ const Login = () => {
                   name="password"
                   placeholder="Admin Password"
                   value={formData.password || ""}
-                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                  className="w-full p-[15px_20px] outline-none text-[1.25rem] text-gray-800 rounded-[5px] bg-white border-none placeholder:text-gray-500"
                   onChange={handleInputChange}
                   required
                   formNoValidate
@@ -433,7 +423,7 @@ const Login = () => {
                 name="email"
                 placeholder="Email"
                 value={formData.email}
-                className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                className="w-full p-[15px_20px] outline-none text-[1.25rem] text-gray-800 rounded-[5px] bg-white border-none placeholder:text-gray-500"
                 onChange={handleInputChange}
                 required
               />
@@ -445,7 +435,7 @@ const Login = () => {
                 name="username"
                 placeholder="Username"
                 value={formData.username}
-                className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                className="w-full p-[15px_20px] outline-none text-[1.25rem] text-gray-800 rounded-[5px] bg-white border-none placeholder:text-gray-500"
                 onChange={handleInputChange}
                 required
               />
@@ -459,7 +449,7 @@ const Login = () => {
                 name="email"
                 placeholder="Email Address"
                 value={formData.email}
-                className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                className="w-full p-[15px_20px] outline-none text-[1.25rem] text-gray-800 rounded-[5px] bg-white border-none placeholder:text-gray-500"
                 onChange={handleInputChange}
                 required
               />
@@ -472,7 +462,7 @@ const Login = () => {
               name="password"
               placeholder="Password"
               value={formData.password}
-              className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+              className="w-full p-[15px_20px] outline-none text-[1.25rem] text-gray-800 rounded-[5px] bg-white border-none placeholder:text-gray-500"
               onChange={handleInputChange}
               required
               formNoValidate
@@ -486,7 +476,7 @@ const Login = () => {
                 name="confirmPassword"
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
-                className="w-full p-[15px_20px] outline-none text-[1.25rem] text-[#8f2c24] rounded-[5px] bg-white border-none placeholder:text-[#db7770]"
+                className="w-full p-[15px_20px] outline-none text-[1.25rem] text-gray-800 rounded-[5px] bg-white border-none placeholder:text-gray-500"
                 onChange={handleInputChange}
                 required
                 formNoValidate
@@ -505,35 +495,27 @@ const Login = () => {
             </button>
           </div>
 
-          <div className="flex justify-between items-center">
-            {activeTab !== "admin" && (
-              <>
-                {activeTab === "signin" && (
-                  <button
-                    onClick={handleForgotPassword}
-                    className="text-[1.1rem] text-[#ffffff] font-medium no-underline hover:text-[#d64c42] bg-transparent border-none cursor-pointer"
-                  >
-                    Forgot Password?
-                  </button>
-                )}
-                {activeTab !== "signin" && (
-                  <span
-                    onClick={() => setActiveTab("signin")}
-                    className="text-[1.1rem] text-[#8f2c24] font-bold cursor-pointer hover:text-[#d64c42] bg-white/60 px-2 py-1 rounded ml-2"
-                  >
-                    Sign In
-                  </span>
-                )}
-                <span
-                  onClick={() => activeTab === "signin" ? setActiveTab("signup") : setActiveTab("signin")}
-                  className="text-[1.1rem] text-[#ffffff] font-medium cursor-pointer hover:text-[#d64c42]"
-                >
-                  {activeTab === "signin" ? "Sign up" : "Sign in"}
-                </span>
-              </>
+          {/* Only show toggle links, not duplicate buttons */}
+          <div className="flex justify-center items-center gap-4">
+            {activeTab === "signin" && (
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-[1.1rem] text-white font-medium hover:text-[#d64c42] bg-transparent border-none cursor-pointer"
+              >
+                Forgot Password?
+              </button>
             )}
+            <button
+              type="button"
+              onClick={() => activeTab === "signin" ? setActiveTab("signup") : setActiveTab("signin")}
+              className="text-[1.1rem] text-white font-medium hover:text-[#d64c42] bg-transparent border-none cursor-pointer"
+            >
+              {activeTab === "signin" ? "Need an account? Sign up" : "Already have account? Sign in"}
+            </button>
           </div>
         </form>
+        
         <div className="w-full flex justify-center pb-8">
           <Link
             to="/"
