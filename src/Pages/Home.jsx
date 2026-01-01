@@ -1,32 +1,233 @@
 import React, { useState, useEffect } from 'react';
-
-// Core structural components
-import Footer from "../Components/Footer";
-import Carousel from "../Components/Carousel";
-
-// Section components based on your design
-import CategorySidebar from "../Components/CategorySidebar"; // Left-hand menu
-import AiVehicleSelector from "../Components/AiVehicleSelector"; // Search/Selector bar
-import ProductGridSection from "../Components/ProductGridSection"; // For 'Flash Sales' and 'Explore'
-import FullWidthBanner from "../Components/FullWidthBanner"; // For Battery/Engine ads
-import ServiceInfoBar from "../Components/ServiceInfoBar"; // Bottom delivery/support info
-
-// Services
 import productService from '../services/productService.jsx';
-
-// Asset imports (as per your original code)
-import carousel1 from "../assets/carousel1.jpeg";
-import carousel2 from "../assets/carousel2.jpeg";
-import carousel3 from "../assets/carousel3.png";
-import carousel4 from "../assets/carousel4.png";
+import Carousel from '../Components/Carousel';
+import FullWidthBanner from '../Components/FullWidthBanner';
+import ServiceInfoBar from '../Components/ServiceInfoBar';
+import ProductGridSection from '../Components/ProductGridSection';
+import ProductCard from '../Components/ProductCard';
 
 const Home = () => {
-  console.log('Home component rendering...');
   const [flashSaleProducts, setFlashSaleProducts] = useState([]);
   const [exploreProducts, setExploreProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Carousel images
+  const carouselImages = [
+    {
+      src: '/src/assets/carousel1.jpeg',
+      alt: 'Premium Auto Parts',
+      caption: {
+        title: 'Premium Quality Auto Parts',
+        description: 'Get the best parts for your vehicle at unbeatable prices'
+      }
+    },
+    {
+      src: '/src/assets/carousel2.jpeg',
+      alt: 'Fast Delivery',
+      caption: {
+        title: 'Fast & Free Delivery',
+        description: 'Free shipping on orders over $140'
+      }
+    },
+    {
+      src: '/src/assets/carousel3.png',
+      alt: 'Expert Support',
+      caption: {
+        title: 'Expert Customer Support',
+        description: '24/7 assistance for all your automotive needs'
+      }
+    },
+    {
+      src: '/src/assets/carousel4.png',
+      alt: 'Special Offers',
+      caption: {
+        title: 'Special Offers',
+        description: 'Limited time deals on premium parts'
+      }
+    }
+  ];
+
+  // Mock data for fallback
+  const mockFlashSaleProducts = [
+    {
+      id: '1',
+      _id: '1',
+      name: 'Car Brake Pads',
+      brand: 'BrakeMaster',
+      category: 'Brakes',
+      price: 80,
+      oldPrice: 100,
+      discount: 20,
+      rating: 4.5,
+      image: '/src/assets/brake-pad.jpg',
+      reviews: 128,
+      stock: 45,
+      description: 'Premium ceramic brake pads for superior stopping power'
+    },
+    {
+      id: '2',
+      _id: '2',
+      name: 'Piston Ring',
+      brand: 'EnginePro',
+      category: 'Engine',
+      price: 200,
+      oldPrice: 250,
+      discount: 20,
+      rating: 4.7,
+      image: '/src/assets/default-part.jpg',
+      reviews: 89,
+      stock: 30,
+      description: 'High-performance piston rings for optimal engine compression'
+    },
+    {
+      id: '3',
+      _id: '3',
+      name: 'Pivot Pin',
+      brand: 'SuspensionTech',
+      category: 'Suspension',
+      price: 180,
+      oldPrice: 220,
+      discount: 18,
+      rating: 4.3,
+      image: '/src/assets/default-part.jpg',
+      reviews: 56,
+      stock: 25,
+      description: 'Durable pivot pins for smooth suspension movement'
+    },
+    {
+      id: '4',
+      _id: '4',
+      name: 'Performance Clutch Kit',
+      brand: 'ClutchMaster',
+      category: 'Transmission',
+      price: 220,
+      oldPrice: 280,
+      discount: 21,
+      rating: 4.6,
+      image: '/src/assets/default-part.jpg',
+      reviews: 94,
+      stock: 18,
+      description: 'Complete performance clutch kit for enhanced driving experience'
+    }
+  ];
+
+  const mockExploreProducts = [
+    {
+      id: '5',
+      _id: '5',
+      name: 'Engine Oil Filter',
+      brand: 'FilterPro',
+      category: 'Filters',
+      price: 25,
+      rating: 4.8,
+      image: '/src/assets/default-part.jpg',
+      reviews: 156,
+      stock: 100,
+      description: 'High-efficiency oil filter for maximum engine protection'
+    },
+    {
+      id: '6',
+      _id: '6',
+      name: 'Shock Absorbers',
+      brand: 'RideControl',
+      category: 'Suspension',
+      price: 180,
+      oldPrice: 220,
+      discount: 18,
+      rating: 4.4,
+      image: '/src/assets/default-part.jpg',
+      reviews: 91,
+      stock: 20,
+      description: 'Advanced hydraulic shock absorbers for smooth ride'
+    },
+    {
+      id: '7',
+      _id: '7',
+      name: 'LED Headlight Kit',
+      brand: 'BrightLight',
+      category: 'Lighting',
+      price: 150,
+      oldPrice: 189,
+      discount: 21,
+      rating: 4.7,
+      image: '/src/assets/default-part.jpg',
+      reviews: 124,
+      stock: 25,
+      description: 'Ultra-bright LED headlight conversion kit'
+    },
+    {
+      id: '8',
+      _id: '8',
+      name: 'Spark Plugs',
+      brand: 'IgnitionTech',
+      category: 'Ignition',
+      price: 35,
+      rating: 4.0,
+      image: '/src/assets/default-part.jpg',
+      reviews: 42,
+      stock: 75,
+      description: 'Iridium spark plugs for improved fuel efficiency'
+    },
+    {
+      id: '9',
+      _id: '9',
+      name: 'Air Filter',
+      brand: 'FilterPro',
+      category: 'Filters',
+      price: 18,
+      rating: 4.3,
+      image: '/src/assets/default-part.jpg',
+      reviews: 89,
+      stock: 120,
+      description: 'High-performance air filter for clean engine intake'
+    },
+    {
+      id: '10',
+      _id: '10',
+      name: 'Car Battery',
+      brand: 'PowerCell',
+      category: 'Electrical',
+      price: 200,
+      oldPrice: 250,
+      discount: 20,
+      rating: 4.6,
+      image: '/src/assets/default-part.jpg',
+      reviews: 203,
+      stock: 15,
+      description: 'Heavy duty automotive battery with 3-year warranty'
+    },
+    {
+      id: '11',
+      _id: '11',
+      name: 'Windshield Wipers',
+      brand: 'ClearView',
+      category: 'Wipers',
+      price: 22,
+      rating: 4.1,
+      image: '/src/assets/default-part.jpg',
+      reviews: 67,
+      stock: 85,
+      description: 'All-season windshield wiper blades'
+    },
+    {
+      id: '12',
+      _id: '12',
+      name: 'Car Side View Mirror',
+      brand: 'AutoVision',
+      category: 'Mirrors',
+      price: 120,
+      oldPrice: 150,
+      discount: 20,
+      rating: 4.2,
+      image: '/src/assets/default-part.jpg',
+      reviews: 78,
+      stock: 35,
+      description: 'Adjustable side view mirror with anti-glare coating'
+    }
+  ];
+
+  // Fetch categories and brands on mount
   useEffect(() => {
     console.log('Home component mounted');
     fetchHomePageData();
@@ -36,249 +237,96 @@ const Home = () => {
     try {
       setLoading(true);
       
-      // Use mock data for now - backend has issues
-      const mockFlashSaleProducts = [
-        {
-          _id: 'flash-1',
-          name: 'Car Side View Mirror',
-          price: 120,
-          oldPrice: 149,
-          discount: 20,
-          rating: 4.5,
-          image: '/assets/default-part.jpg',
-          reviews: 88,
-        },
-        {
-          _id: 'flash-2',
-          name: 'Car Brake Pads',
-          price: 85,
-          oldPrice: 100,
-          discount: 15,
-          rating: 4.2,
-          image: '/assets/default-part.jpg',
-          reviews: 75,
-        },
-        {
-          _id: 'flash-3',
-          name: 'LED Headlight Kit',
-          price: 150,
-          oldPrice: 189,
-          discount: 21,
-          rating: 4.7,
-          image: '/assets/default-part.jpg',
-          reviews: 124,
-        },
-        {
-          _id: 'flash-4',
-          name: 'Car Battery',
-          price: 200,
-          oldPrice: 250,
-          discount: 20,
-          rating: 4.6,
-          image: '/assets/default-part.jpg',
-          reviews: 203,
-        }
-      ];
-
-      const mockExploreProducts = [
-        {
-          _id: 'explore-1',
-          name: 'Engine Oil Filter',
-          price: 25,
-          rating: 4.8,
-          image: '/assets/default-part.jpg',
-          reviews: 156,
-        },
-        {
-          _id: 'explore-2',
-          name: 'Spark Plugs',
-          price: 35,
-          rating: 4.0,
-          image: '/assets/default-part.jpg',
-          reviews: 42,
-        },
-        {
-          _id: 'explore-3',
-          name: 'Air Filter',
-          price: 18,
-          rating: 4.3,
-          image: '/assets/default-part.jpg',
-          reviews: 89,
-        },
-        {
-          _id: 'explore-4',
-          name: 'Windshield Wipers',
-          price: 22,
-          rating: 4.1,
-          image: '/assets/default-part.jpg',
-          reviews: 67,
-        }
-      ];
-
+      // Fetch real data from API
+      const [flashSaleResponse, exploreResponse] = await Promise.all([
+        productService.getFeaturedProducts('flash-sale'),
+        productService.getProducts({ limit: 8, sortBy: 'createdAt', sortOrder: 'desc' })
+      ]);
+      
+      // Use real data when available, otherwise use mock data
+      if (flashSaleResponse && flashSaleResponse.products && flashSaleResponse.products.length > 0) {
+        setFlashSaleProducts(flashSaleResponse.products.map(p => ({
+          ...p,
+          id: p._id,
+          image: p.images?.[0] ? `http://localhost:5000/uploads/products/${p.images[0].split('/').pop()}` : '/src/assets/default-part.jpg',
+          oldPrice: p.discount ? p.price * (1 + p.discount / 100) : null
+        })));
+      } else {
+        setFlashSaleProducts(mockFlashSaleProducts);
+      }
+      
+      if (exploreResponse && exploreResponse.products && exploreResponse.products.length > 0) {
+        setExploreProducts(exploreResponse.products.map(p => ({
+          ...p,
+          id: p._id,
+          image: p.images?.[0] ? `http://localhost:5000/uploads/products/${p.images[0].split('/').pop()}` : '/src/assets/default-part.jpg',
+          oldPrice: p.discount ? p.price * (1 + p.discount / 100) : null
+        })));
+      } else {
+        setExploreProducts(mockExploreProducts);
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching home page data:', err);
+      setError(err.message);
+      
+      // Use mock data if API fails
       setFlashSaleProducts(mockFlashSaleProducts);
       setExploreProducts(mockExploreProducts);
-      setLoading(false);
-      
-    } catch (err) {
-      console.error('Error setting up home page data:', err);
-      setError(err.message);
       setLoading(false);
     }
   };
 
-  if (loading && flashSaleProducts.length === 0 && exploreProducts.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-20">
-        <div className="flex justify-center items-center h-64">
-          <div className="loading loading-spinner loading-lg"></div>
-          <p className="ml-4 text-gray-600">Loading products...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-20">
-        <div className="alert alert-error max-w-2xl mx-auto">
-          <span>{error}</span>
-          <button 
-            className="btn btn-sm btn-ghost ml-4" 
-            onClick={fetchHomePageData}
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="homepage-content">
-      {/* 1. TOP SECTION: Categories Sidebar + Carousel/Hero */}
-      <div className="container mx-auto px-4 pt-6">
-        <div className="flex">
-          {/* 1a. Category Sidebar (Left-hand menu) */}
-          {/* Hides on small screens, occupies 20% width on large screens */}
-          <div className="hidden lg:block w-1/5 pr-8">
-            <CategorySidebar />
-          </div>
-
-          {/* 1b. Main Hero Carousel */}
-          <div className="w-full lg:w-4/5">
-            <Carousel
-              images={[
-                {
-                  src: carousel1,
-                  alt: "AI-Powered Part Search Banner",
-                  caption: {
-                    title: "Heavy Duty High Performance Battery",
-                    description:
-                      "Guaranteed stronger backup with long term battery health.",
-                  },
-                },
-                {
-                  src: carousel3,
-                  alt: "Flash Sale on Auto Components",
-                  caption: {
-                    title: "Advanced Hydraulic Shock Absorber",
-                    description: "Absorbs impact. Controls motion. Extends ride comfort",
-                  },       
-                },
-                {
-                  src: carousel2,
-                  alt: "Flash Sale on Auto Components",
-                  caption: {
-                    title: "Complete Wheel Solutions",
-                    description: "Everything your ride needs to stay rolling",
-                  },
-                },
-                {
-                  src: carousel4,
-                  alt: "Flash Sale on Auto Components",
-                  caption: {
-                    title: "Next-Gen LED Headlight Absorber",
-                    description: "Engineered to absorb impact and amplify illumination",
-                  },
-                }
-              ]}
-            />
-          </div>
-        </div>
+    <div className="home-page">
+      {/* Hero Carousel */}
+      <div className="mt-24">
+        <Carousel images={carouselImages} />
       </div>
 
-      {/* 2. CRITICAL: AI Vehicle Selector / Search Bar */}
-      {/* This is positioned just below header, often layered slightly over carousel. */}
-      {/* We place it outside container to allow for full-width styling if needed. */}
-      <div className="container mx-auto px-4 mt-3 relative z-10">
-        <AiVehicleSelector />
+      {/* Service Info Bar */}
+      <div className="container mx-auto px-4 py-8">
+        <ServiceInfoBar />
       </div>
 
-      {/* 3. FLASH SALES SECTION (Today's Deals) */}
-      <div className="container mx-auto px-4 mt-12">
-        <ProductGridSection
-          title="Today's Flash Sales"
+      {/* Flash Sale Section */}
+      <div className="container mx-auto px-4 py-8">
+        <ProductGridSection 
+          title="Flash Sale" 
           products={flashSaleProducts}
           showTimer={true}
-          sectionLink="/shop?sale=flash"
+          sectionLink="/shop?category=flash-sale"
         />
       </div>
 
-      {/* 4. MID-PAGE BANNER (e.g., Battery/Extreme Weather Ad) */}
-      <div className="my-16">
-        {/* This component will span the full width of the viewport */}
-        <FullWidthBanner
-          image="/assets/titaniumx-battery-banner.jpg"
-          alt="Extreme Weather Battery Ad"
-          // Other props for text overlay
+      {/* Full Width Banner */}
+      <div className="container mx-auto px-4 py-8">
+        <FullWidthBanner 
+          image="/src/assets/car_transparent.gif"
+          alt="Auto Parts Banner"
+          className="h-64"
+          title="Premium Auto Parts"
+          subtitle="Quality parts for every vehicle"
         />
       </div>
 
-      {/* 5. EXPLORE PRODUCTS GRID (Based on second product row in your image) */}
-      <div className="container mx-auto px-4 mt-12">
-        <ProductGridSection
-          title="Explore All Products"
+      {/* Explore Products Section */}
+      <div className="container mx-auto px-4 py-8">
+        <ProductGridSection 
+          title="Explore Products" 
           products={exploreProducts}
+          showTimer={false}
           sectionLink="/shop"
         />
       </div>
 
-      {/* 6. NEW ARRIVAL/PROMOTIONAL SECTION */}
-      <div className="container mx-auto px-4 my-16">
-        <h2 className="text-2xl font-bold mb-6 text-red-600 border-b-2 border-red-600 pb-1 w-fit">
-          Featured & New Arrival
-        </h2>
-        {/* The design shows a specific two-column structure here: 
-                   1. Future Engine Ad (Large) 
-                   2. Shop Speakers/Air Freshener (Small Columns) 
-                   This is often best handled by a custom component like PromosGrid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Placeholder for main promotional image */}
-          <FullWidthBanner
-            image="/assets/future-engine-ad.jpg"
-            alt="The Future Engine Is Coming"
-            className="h-96"
-          />
-          {/* Placeholder for two smaller items */}
-          <div className="grid grid-cols-1 gap-6">
-            <FullWidthBanner
-              image="/assets/speakers-promo.jpg"
-              alt="Shop Speakers"
-              className="h-44"
-            />
-            <FullWidthBanner
-              image="/assets/air-freshener-promo.jpg"
-              alt="Shop Car Perfumes"
-              className="h-44"
-            />
-          </div>
+      {/* Loading indicator */}
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="loading loading-spinner loading-lg"></div>
         </div>
-      </div>
-
-      {/* 7. SERVICE BAR (Free Delivery, Support, Guarantee) */}
-      <div className="container mx-auto px-4 my-16 border-t border-b border-gray-200 py-10">
-        <ServiceInfoBar />
-      </div>
+      )}
     </div>
   );
 };

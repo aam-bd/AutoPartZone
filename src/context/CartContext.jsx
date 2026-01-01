@@ -23,12 +23,14 @@ const cartReducer = (state, action) => {
       return { ...state, error: action.payload, loading: false };
     
     case CART_ACTIONS.SET_CART:
-      const totals = cartService.calculateTotals(action.payload);
+      const cart = action.payload;
+      const items = cart.items || [];
+      const totals = cartService.calculateTotals(cart);
       return {
         ...state,
-        cart: action.payload,
-        cartItems: action.payload.items || [],
-        cartCount: cartService.getItemCount(action.payload),
+        cart: cart,
+        cartItems: items,
+        cartCount: cartService.getItemCount(cart),
         ...totals,
         loading: false,
         error: null
@@ -72,38 +74,32 @@ export const CartProvider = ({ children }) => {
 
     // Load cart when component mounts or user logs in/out
     useEffect(() => {
-        loadCart();
+        if (user) {
+            // Sync local cart and then load from backend
+            syncCart();
+        } else {
+            loadCart();
+        }
     }, [user]);
 
     const loadCart = async () => {
         dispatch({ type: CART_ACTIONS.SET_LOADING, payload: true });
         
         try {
-            // Use mock cart data with demo products for better UX
-            const mockCart = {
-                items: [
-                    {
-                        _id: '1',
-                        productId: '1',
-                        name: 'Car Side View Mirror',
-                        price: 120,
-                        image: '/assets/default-part.jpg',
-                        quantity: 1
-                    },
-                    {
-                        _id: '2',
-                        productId: '2',
-                        name: 'Car Brake Pads',
-                        price: 85,
-                        image: '/assets/default-part.jpg',
-                        quantity: 2
-                    }
-                ],
-                _id: 'mock-cart-id'
-            };
-            dispatch({ type: CART_ACTIONS.SET_CART, payload: mockCart });
+            const cart = await cartService.getCart();
+            
+            // If using localStorage, enrich missing product details
+            if (!localStorage.getItem('token') && cart.items) {
+                const enrichedCart = await cartService.enrichCartWithProductDetails();
+                dispatch({ type: CART_ACTIONS.SET_CART, payload: enrichedCart });
+            } else {
+                dispatch({ type: CART_ACTIONS.SET_CART, payload: cart });
+            }
         } catch (error) {
-            dispatch({ type: CART_ACTIONS.SET_ERROR, payload: error.message });
+            console.warn('Cart loading error, using fallback:', error.message);
+            // Don't set error for 401 issues, just use empty cart
+            const emptyCart = { items: [] };
+            dispatch({ type: CART_ACTIONS.SET_CART, payload: emptyCart });
         }
     };
 
@@ -111,78 +107,69 @@ export const CartProvider = ({ children }) => {
         const productId = product._id || product.id || product.productId;
         
         try {
-            // Mock add to cart - update local state
-            const currentItems = [...state.cartItems];
-            const existingItemIndex = currentItems.findIndex(item => 
-                (item.productId && item.productId.toString() === productId.toString()) ||
-                (item._id && item._id.toString() === productId.toString())
-            );
+            console.log('Adding to cart:', { productId, product, quantity });
+            const cart = await cartService.addToCart(productId, quantity);
+            console.log('Cart response:', cart);
             
-            if (existingItemIndex !== -1) {
-                currentItems[existingItemIndex].quantity += quantity;
-            } else {
-                currentItems.push({
-                    _id: productId,
-                    productId: productId,
-                    name: product.name,
-                    price: product.price,
-                    image: product.image,
-                    quantity: quantity
+            // Enrich cart items with product details if missing
+            if (cart.items && cart.items.length > 0) {
+                cart.items = cart.items.map(item => {
+                    // If item is missing product details but we have the product info, enrich it
+                    if (!item.name && item.productId === productId) {
+                        return {
+                            ...item,
+                            name: product.name,
+                            brand: product.brand,
+                            image: product.image,
+                            price: product.price,
+                            productId: product._id || productId
+                        };
+                    }
+                    return item;
                 });
             }
             
-            const updatedCart = { items: currentItems, _id: 'mock-cart-id' };
-            dispatch({ type: CART_ACTIONS.SET_CART, payload: updatedCart });
+            // For guest users, also trigger enrichment
+            if (!localStorage.getItem('token')) {
+                await cartService.enrichCartWithProductDetails();
+                const enrichedCart = cartService.getLocalCart();
+                dispatch({ type: CART_ACTIONS.SET_CART, payload: enrichedCart });
+            } else {
+                dispatch({ type: CART_ACTIONS.SET_CART, payload: cart });
+            }
         } catch (error) {
+            console.error('Add to cart error:', error);
             dispatch({ type: CART_ACTIONS.SET_ERROR, payload: error.message });
         }
     };
 
     const updateCartQuantity = async (productId, newQuantity) => {
-        newQuantity = parseInt(newQuantity);
+        newQuantity = parseInt(newQuantity) || 1;
+        
+        if (newQuantity < 1) return;
         
         try {
-            let currentItems = [...state.cartItems];
-            
-            if (newQuantity <= 0 || isNaN(newQuantity)) {
-                currentItems = currentItems.filter(item => 
-                    (item.productId && item.productId.toString() !== productId.toString()) &&
-                    (item._id && item._id.toString() !== productId.toString())
-                );
-            } else {
-                const itemIndex = currentItems.findIndex(item => 
-                    (item.productId && item.productId.toString() === productId.toString()) ||
-                    (item._id && item._id.toString() === productId.toString())
-                );
-                
-                if (itemIndex !== -1) {
-                    currentItems[itemIndex].quantity = newQuantity;
-                }
-            }
-            
-            const updatedCart = { items: currentItems, _id: 'mock-cart-id' };
-            dispatch({ type: CART_ACTIONS.SET_CART, payload: updatedCart });
+            const cart = await cartService.updateQuantity(productId, newQuantity);
+            dispatch({ type: CART_ACTIONS.SET_CART, payload: cart });
         } catch (error) {
-            dispatch({ type: CART_ACTIONS.SET_ERROR, payload: error.message });
+            console.error('Update quantity error:', error);
+            // Don't set error state to prevent cart reset
         }
     };
 
     const removeFromCart = async (productId) => {
         try {
-            const currentItems = state.cartItems.filter(item => 
-                (item.productId && item.productId.toString() !== productId.toString()) &&
-                (item._id && item._id.toString() !== productId.toString())
-            );
-            
-            const updatedCart = { items: currentItems, _id: 'mock-cart-id' };
-            dispatch({ type: CART_ACTIONS.SET_CART, payload: updatedCart });
+            const cart = await cartService.removeFromCart(productId);
+            dispatch({ type: CART_ACTIONS.SET_CART, payload: cart });
         } catch (error) {
-            dispatch({ type: CART_ACTIONS.SET_ERROR, payload: error.message });
+            console.error('Remove from cart error:', error);
+            // Don't set error state to prevent cart reset
         }
     };
 
     const clearCart = async () => {
         try {
+            const cart = await cartService.clearCart();
             dispatch({ type: CART_ACTIONS.CLEAR_CART });
         } catch (error) {
             dispatch({ type: CART_ACTIONS.SET_ERROR, payload: error.message });
@@ -191,57 +178,33 @@ export const CartProvider = ({ children }) => {
 
     // Helper function to check if product is in cart
     const isInCart = (productId) => {
-        return state.cartItems.some(item => 
-            (item.productId && item.productId.toString() === productId.toString()) ||
-            (item._id && item._id.toString() === productId.toString())
-        );
+        if (!productId || !state.cartItems) return false;
+        return state.cartItems.some(item => {
+            const itemProductId = item.productId || item._id || item.id;
+            return itemProductId && itemProductId.toString() === productId.toString();
+        });
     };
 
     // Get cart item quantity
     const getItemQuantity = (productId) => {
-        const item = state.cartItems.find(item => 
-            (item.productId && item.productId.toString() === productId.toString()) ||
-            (item._id && item._id.toString() === productId.toString())
-        );
+        if (!productId || !state.cartItems) return 0;
+        const item = state.cartItems.find(item => {
+            const itemProductId = item.productId || item._id || item.id;
+            return itemProductId && itemProductId.toString() === productId.toString();
+        });
         return item ? item.quantity || item.qty || 0 : 0;
     };
 
-    // Add demo products to cart helper
-    const addDemoProducts = async () => {
-        const demoProducts = [
-            {
-                _id: '1',
-                name: 'Car Side View Mirror',
-                price: 120,
-                image: '/assets/default-part.jpg',
-                quantity: 1
-            },
-            {
-                _id: '2',
-                name: 'Car Brake Pads',
-                price: 85,
-                image: '/assets/default-part.jpg',
-                quantity: 2
-            }
-        ];
-        
+    // Sync local cart when user logs in
+    const syncCart = async () => {
         try {
-            const updatedItems = [...state.cartItems];
-            demoProducts.forEach(demoProduct => {
-                const existingItemIndex = updatedItems.findIndex(item => 
-                    (item.productId && item.productId.toString() === demoProduct._id.toString()) ||
-                    (item._id && item._id.toString() === demoProduct._id.toString())
-                );
-                
-                if (existingItemIndex === -1) {
-                    updatedItems.push(demoProduct);
-                }
-            });
-            
-            const updatedCart = { items: updatedItems, _id: 'mock-cart-id' };
-            dispatch({ type: CART_ACTIONS.SET_CART, payload: updatedCart });
+            const cart = await cartService.syncCart();
+            dispatch({ type: CART_ACTIONS.SET_CART, payload: cart });
         } catch (error) {
-            dispatch({ type: CART_ACTIONS.SET_ERROR, payload: error.message });
+            console.warn('Cart sync error, using fallback:', error.message);
+            // Use local cart as fallback
+            const localCart = cartService.getLocalCart();
+            dispatch({ type: CART_ACTIONS.SET_CART, payload: localCart });
         }
     };
 
@@ -261,7 +224,7 @@ export const CartProvider = ({ children }) => {
         removeFromCart,
         clearCart,
         loadCart,
-        addDemoProducts,
+        syncCart,
         
         // Helpers
         isInCart,

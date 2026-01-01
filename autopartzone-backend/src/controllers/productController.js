@@ -2,7 +2,25 @@ import Product from "../models/Product.js";
 
 export const addProduct = async (req, res) => {
   try {
-    const { name, brand, make, model, category, price, stock, description } = req.body;
+    console.log('Add product - file:', req.file);
+    console.log('Add product - body:', req.body);
+    console.log('Add product - headers:', req.headers);
+
+    let data = req.body;
+
+    // Handle form data if image was uploaded
+    if (req.file) {
+      console.log('Processing form data with file upload...');
+      // For FormData, values are already parsed correctly
+      data = { ...req.body };
+      
+      // Convert string values to proper types
+      if (data.price !== undefined) data.price = parseFloat(data.price);
+      if (data.stock !== undefined) data.stock = parseInt(data.stock);
+      if (data.isAvailable !== undefined) data.isAvailable = data.isAvailable === 'true';
+    }
+
+    const { name, brand, make, model, category, price, stock, description } = data;
 
     if (!name || !brand || !category || price == null || stock == null) {
       return res.status(400).json({ message: "All required fields are missing" });
@@ -20,7 +38,7 @@ export const addProduct = async (req, res) => {
       return res.status(409).json({ message: "Product with same name, brand and make/model already exists" });
     }
 
-    const product = new Product({
+    const productData = {
       name,
       brand,
       make: make || "",
@@ -30,7 +48,16 @@ export const addProduct = async (req, res) => {
       price,
       stock,
       isAvailable: true,
-    });
+    };
+
+    // Add image if uploaded
+    if (req.file) {
+      productData.images = [`/uploads/products/${req.file.filename}`];
+    }
+
+    console.log('Creating product with data:', productData);
+
+    const product = new Product(productData);
 
     await product.save();
     res.status(201).json({ message: "Product added successfully", product });
@@ -171,9 +198,17 @@ export const getFeaturedProducts = async (req, res) => {
 // Get product categories
 export const getCategories = async (req, res) => {
   try {
-    const categories = await Product.distinct('category', { isAvailable: true });
+    // Try with isAvailable filter first
+    let categories;
+    try {
+      categories = await Product.distinct('category', { isAvailable: true });
+    } catch (err) {
+      console.error('Categories with isAvailable failed, trying without:', err);
+      categories = await Product.distinct('category');
+    }
     res.json({ categories });
   } catch (err) {
+    console.error('Categories error:', err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
@@ -181,9 +216,82 @@ export const getCategories = async (req, res) => {
 // Get product brands
 export const getBrands = async (req, res) => {
   try {
-    const brands = await Product.distinct('brand', { isAvailable: true });
+    // Try with isAvailable filter first
+    let brands;
+    try {
+      brands = await Product.distinct('brand', { isAvailable: true });
+    } catch (err) {
+      console.error('Brands with isAvailable failed, trying without:', err);
+      brands = await Product.distinct('brand');
+    }
     res.json({ brands });
   } catch (err) {
+    console.error('Brands error:', err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Update product
+export const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('Update request - file:', req.file);
+    console.log('Update request - body:', req.body);
+
+    let updateData = req.body;
+
+    // If image uploaded, handle form data differently
+    if (req.file) {
+      console.log('Processing update form data with file upload...');
+      // With FormData, values are already parsed correctly
+      updateData = { ...req.body };
+      
+      // Convert string values to proper types
+      if (updateData.price !== undefined) updateData.price = parseFloat(updateData.price);
+      if (updateData.stock !== undefined) updateData.stock = parseInt(updateData.stock);
+      if (updateData.isAvailable !== undefined) updateData.isAvailable = updateData.isAvailable === 'true';
+      
+      // Add the image
+      updateData.images = [`/uploads/products/${req.file.filename}`];
+    } else {
+      // Regular JSON form data
+      // Convert string values to proper types
+      if (updateData.price !== undefined) {
+        updateData.price = parseFloat(updateData.price);
+      }
+      if (updateData.stock !== undefined) {
+        updateData.stock = parseInt(updateData.stock);
+      }
+      if (updateData.discount !== undefined) {
+        updateData.discount = parseFloat(updateData.discount) || 0;
+      }
+
+      // Convert boolean strings
+      if (updateData.isAvailable !== undefined) {
+        updateData.isAvailable = updateData.isAvailable === 'true' || updateData.isAvailable === true;
+      }
+    }
+
+    console.log('Final update data:', updateData);
+
+    // Remove fields that shouldn't be updated directly
+    delete updateData._id;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+
+    const product = await Product.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json({ message: "Product updated successfully", product });
+  } catch (err) {
+    console.error('Update product error:', err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };

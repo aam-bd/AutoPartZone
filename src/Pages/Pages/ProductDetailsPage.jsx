@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import productService from '../../services/productService';
 
 // Mock product data
 const mockProducts = {
@@ -314,26 +315,48 @@ export default function ProductDetailsPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab] = useState('description');
+  const [imagesLoaded, setImagesLoaded] = useState(new Set());
 
   useEffect(() => {
-    // Load product data
-    setTimeout(() => {
-      const foundProduct = mockProducts[productId];
-      if (foundProduct) {
-        setProduct(foundProduct);
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const response = await productService.getProductById(productId);
+        setProduct(response.product || response);
         setError(null);
-      } else {
+      } catch (err) {
+        console.error('Error fetching product:', err);
         setError('Product not found');
+        
+        // Fallback to mock data
+        const foundProduct = mockProducts[productId];
+        if (foundProduct) {
+          setProduct(foundProduct);
+          setError(null);
+        } else {
+          setError('Product not found');
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, 500);
+    };
+
+    if (productId) {
+      fetchProduct();
+    }
   }, [productId]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product) {
-      addToCart(product, quantity);
-      // Show success message
-      alert(`Added ${quantity} ${product.name}(s) to cart!`);
+      try {
+        await addToCart(product, quantity);
+        // Show success message - use a better notification than alert
+        console.log(`Added ${quantity} ${product.name}(s) to cart!`);
+        // Optional: Add a toast notification here
+      } catch (error) {
+        console.error('Failed to add to cart:', error);
+        alert('Failed to add item to cart. Please try again.');
+      }
     }
   };
 
@@ -400,11 +423,26 @@ export default function ProductDetailsPage() {
         {/* Product Images */}
         <div className="space-y-4">
           <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-            <img 
-              src={product.images[selectedImage]} 
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
+            <div className="relative w-full h-full">
+              {!imagesLoaded.has(0) && (
+                <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
+              )}
+              <img 
+                 src={imagesLoaded.has(0) 
+                   ? `http://localhost:5000${product.images[selectedImage]}` 
+                   : ''}
+                alt={product.name}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${
+                  imagesLoaded.has(0) ? 'opacity-100' : 'opacity-0'
+                }`}
+                onLoad={() => setImagesLoaded(new Set(imagesLoaded).add(0))}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/assets/default-part.jpg';
+                  setImagesLoaded(new Set(imagesLoaded).add(0));
+                }}
+              />
+            </div>
           </div>
           {product.images.length > 1 && (
             <div className="flex gap-2">
@@ -416,7 +454,26 @@ export default function ProductDetailsPage() {
                     selectedImage === index ? 'border-primary' : 'border-gray-200'
                   }`}
                 >
-                  <img src={image} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover" />
+                  <div className="relative w-full h-full">
+                    {!imagesLoaded.has(index) && (
+                      <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
+                    )}
+                    <img 
+                      src={imagesLoaded.has(index) 
+                        ? `http://localhost:5000${image}` 
+                        : ''} 
+                      alt={`${product.name} ${index + 1}`} 
+                      className={`w-full h-full object-cover transition-opacity duration-300 ${
+                        imagesLoaded.has(index) ? 'opacity-100' : 'opacity-0'
+                      }`}
+                      onLoad={() => setImagesLoaded(new Set(imagesLoaded).add(index))}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/assets/default-part.jpg';
+                        setImagesLoaded(new Set(imagesLoaded).add(index));
+                      }}
+                    />
+                  </div>
                 </button>
               ))}
             </div>
@@ -708,6 +765,10 @@ export default function ProductDetailsPage() {
                   src={relatedProduct.image} 
                   alt={relatedProduct.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/assets/default-part.jpg';
+                  }}
                 />
               </div>
               <div className="p-4">

@@ -71,7 +71,7 @@ const Profile = () => {
     }
   }, [activeTab, token]);
 
-  const loadOrders = async () => {
+   const loadOrders = async () => {
     try {
       const response = await fetch('/api/orders/user', {
         headers: {
@@ -81,10 +81,20 @@ const Profile = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setOrders(data.orders || []);
+        // Handle different response structures
+        const ordersData = data.orders || data || [];
+        // Sort orders by date (newest first)
+        const sortedOrders = Array.isArray(ordersData) 
+          ? ordersData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          : [];
+        setOrders(sortedOrders);
+      } else {
+        const errorData = await response.json();
+        console.error('Load orders error:', errorData);
       }
     } catch (error) {
       console.error('Failed to load orders:', error);
+      setOrders([]); // Set empty array on error
     }
   };
 
@@ -400,7 +410,7 @@ const Profile = () => {
                       <div key={order._id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <h3 className="text-lg font-semibold">Order #{order.orderNumber}</h3>
+                           <h3 className="text-lg font-semibold">Order #{order._id?.slice(-8) || order.orderNumber}</h3>
                             <p className="text-gray-600">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
                           </div>
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
@@ -411,20 +421,20 @@ const Profile = () => {
                         <div className="mb-4">
                           <p className="text-sm text-gray-600 mb-2">Items:</p>
                           <div className="space-y-2">
-                            {order.items.map((item, index) => (
-                              <div key={index} className="flex justify-between text-sm">
-                                <span>{item.name} x {item.quantity}</span>
-                                <span>${(item.price * item.quantity).toFixed(2)}</span>
-                              </div>
-                            ))}
+                             {order.items && order.items.map((item, index) => (
+                               <div key={index} className="flex justify-between text-sm">
+                                 <span>{item.productId?.name || item.name || 'Product'} x {item.quantity || item.qty || 0}</span>
+                                 <span>৳{((item.price || item.productId?.price || 0) * (item.quantity || item.qty || 0)).toFixed(2)}</span>
+                               </div>
+                             ))}
                           </div>
                         </div>
 
                         <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                          <div>
-                            <p className="text-sm text-gray-600">Total Amount:</p>
-                            <p className="text-xl font-bold text-gray-800">${order.totalAmount.toFixed(2)}</p>
-                          </div>
+                           <div>
+                             <p className="text-sm text-gray-600">Total Amount:</p>
+                             <p className="text-xl font-bold text-gray-800">৳{(order.totalAmount || order.total || 0).toFixed(2)}</p>
+                           </div>
                           <button
                             onClick={() => navigate(`/order/${order._id}`)}
                             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import productService from '../services/productService.jsx';
 import ProductCard from '../Components/ProductCard';
+import AiVehicleSelector from '../Components/AiVehicleSelector';
 
 const ShopPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -54,22 +55,7 @@ const ShopPage = () => {
         setSearchParams(params);
     }, [filters, setSearchParams]);
 
-    // Mock data
     const mockProducts = [
-        {
-            _id: '1',
-            name: 'Car Side View Mirror',
-            brand: 'AutoVision',
-            category: 'Mirrors',
-            price: 120,
-            oldPrice: 149,
-            discount: 20,
-            rating: 4.5,
-            image: '/assets/default-part.jpg',
-            reviews: 88,
-            stock: 50,
-            description: 'High quality side view mirror with anti-glare coating'
-        },
         {
             _id: '2',
             name: 'Car Brake Pads',
@@ -221,10 +207,35 @@ const ShopPage = () => {
         try {
             setLoading(true);
             
-            // Filter products based on current filters
-            let filteredProducts = [...mockProducts];
+            const response = await productService.getProducts({
+                q: filters.search,
+                category: filters.category,
+                brand: filters.brand,
+                minPrice: filters.minPrice,
+                maxPrice: filters.maxPrice,
+                page: filters.page,
+                limit: filters.limit,
+                sortBy: filters.sortBy,
+                sortOrder: filters.sortOrder,
+                inStock: filters.inStock
+            });
+
+            setProducts(response.products || []);
+            setPagination(response.pagination || {
+                current: 1,
+                pages: 1,
+                total: 0,
+                limit: filters.limit
+            });
             
-            // Search filter
+        } catch (err) {
+            console.error('Error fetching products:', err);
+            setError(err.message);
+            
+            // Use mock data if API fails
+            let filteredProducts = mockProducts;
+            
+            // Apply filters
             if (filters.search) {
                 filteredProducts = filteredProducts.filter(product => 
                     product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -232,17 +243,14 @@ const ShopPage = () => {
                 );
             }
             
-            // Category filter
             if (filters.category) {
                 filteredProducts = filteredProducts.filter(product => product.category === filters.category);
             }
             
-            // Brand filter
             if (filters.brand) {
                 filteredProducts = filteredProducts.filter(product => product.brand === filters.brand);
             }
             
-            // Price range filter
             if (filters.minPrice) {
                 filteredProducts = filteredProducts.filter(product => product.price >= parseFloat(filters.minPrice));
             }
@@ -250,7 +258,6 @@ const ShopPage = () => {
                 filteredProducts = filteredProducts.filter(product => product.price <= parseFloat(filters.maxPrice));
             }
             
-            // In stock filter
             if (filters.inStock) {
                 filteredProducts = filteredProducts.filter(product => product.stock > 0);
             }
@@ -297,28 +304,28 @@ const ShopPage = () => {
                 total: filteredProducts.length,
                 limit: filters.limit
             });
-            
-            setLoading(false);
-        } catch (err) {
-            console.error('Error fetching products:', err);
-            setError(err.message);
+        } finally {
             setLoading(false);
         }
     };
 
     const fetchCategories = async () => {
         try {
-            setCategories(mockCategories);
+            const response = await productService.getCategories();
+            setCategories(response.categories || mockCategories);
         } catch (err) {
             console.error('Error fetching categories:', err);
+            setCategories(mockCategories);
         }
     };
 
     const fetchBrands = async () => {
         try {
-            setBrands(mockBrands);
+            const response = await productService.getBrands();
+            setBrands(response.brands || mockBrands);
         } catch (err) {
             console.error('Error fetching brands:', err);
+            setBrands(mockBrands);
         }
     };
 
@@ -373,6 +380,11 @@ const ShopPage = () => {
 
     return (
         <div className="shop-page container mx-auto px-4 py-8">
+            {/* Vehicle Selector */}
+            <div className="mb-8">
+                <AiVehicleSelector />
+            </div>
+            
             <div className="flex flex-col lg:flex-row gap-8">
                 {/* Filters Sidebar */}
                 <div className="lg:w-1/4">
@@ -512,7 +524,9 @@ const ShopPage = () => {
                                     product={{
                                         ...product,
                                         id: product._id,
-                                        image: product.images?.[0] || '/assets/default-part.jpg',
+                                         image: product.images?.[0] 
+                                             ? `http://localhost:5000${product.images[0]}` 
+                                             : '/assets/default-part.jpg',
                                         price: product.price,
                                         oldPrice: product.discount ? product.price * (1 + product.discount / 100) : null,
                                         discount: product.discount

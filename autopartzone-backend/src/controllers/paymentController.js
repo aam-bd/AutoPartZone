@@ -5,7 +5,7 @@ import Product from '../models/Product.js';
 import AuditLog from '../models/AuditLog.js';
 
 // Initialize Stripe with your secret key
-const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
+const stripeClient = stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy');
 
 // Create payment intent
 export const createPaymentIntent = async (req, res) => {

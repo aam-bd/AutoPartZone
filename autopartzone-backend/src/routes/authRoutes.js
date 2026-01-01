@@ -8,7 +8,9 @@ import {
   resetPassword, 
   verifyEmail, 
   getProfile, 
-  updateProfile 
+  updateProfile,
+  getAllUsers,
+  updateUserRole
 } from "../controllers/authController.js";
 import authenticate from "../middleware/authenticate.js";
 import authorize from "../middleware/authorize.js";
@@ -69,42 +71,7 @@ router.post("/register-admin", async (req, res) => {
 });
 
 // Admin only routes
-router.get(
-  "/users",
-  authenticate,
-  authorize("admin"),
-  async (req, res) => {
-    try {
-      const users = await User.find({}).select('-password');
-      res.json({ users });
-    } catch (error) {
-      res.status(500).json({ message: "Server error", error: error.message });
-    }
-  }
-);
-
-router.patch(
-  "/users/:id/status",
-  authenticate,
-  authorize("admin"),
-  async (req, res) => {
-    try {
-      const { isActive } = req.body;
-      const user = await User.findByIdAndUpdate(
-        req.params.id,
-        { isActive },
-        { new: true }
-      ).select('-password');
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json({ message: "User status updated", user });
-    } catch (error) {
-      res.status(500).json({ message: "Server error", error: error.message });
-    }
-  }
-);
+router.get("/users", authenticate, authorize("admin"), getAllUsers);
+router.put("/users/:id/role", authenticate, authorize("admin"), updateUserRole);
 
 export default router;

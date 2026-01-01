@@ -45,59 +45,7 @@ class ProductService {
 
   // Search products
   async searchProducts(params = {}) {
-    // Return mock data instead of API call
-    const mockProducts = [
-      {
-        _id: '1',
-        name: 'Car Side View Mirror',
-        brand: 'AutoVision',
-        category: 'Mirrors',
-        price: 120,
-        oldPrice: 149,
-        discount: 20,
-        rating: 4.5,
-        image: '/assets/default-part.jpg',
-        reviews: 88,
-        stock: 50
-      },
-      {
-        _id: '2',
-        name: 'Car Brake Pads',
-        brand: 'BrakeMaster',
-        category: 'Brakes',
-        price: 85,
-        oldPrice: 100,
-        discount: 15,
-        rating: 4.2,
-        image: '/assets/default-part.jpg',
-        reviews: 75,
-        stock: 30
-      },
-      {
-        _id: '3',
-        name: 'Engine Oil Filter',
-        brand: 'FilterPro',
-        category: 'Filters',
-        price: 25,
-        rating: 4.8,
-        image: '/assets/default-part.jpg',
-        reviews: 156,
-        stock: 100
-      }
-    ];
-
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return { 
-      products: mockProducts,
-      pagination: {
-        current: 1,
-        pages: 1,
-        total: mockProducts.length,
-        limit: 20
-      }
-    };
+    return this.getProducts(params);
   }
 
   // Get product categories
@@ -162,36 +110,97 @@ class ProductService {
   }
 
   // Admin only: Create product
-  async createProduct(productData) {
+  async createProduct(productData, imageFile = null) {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_BASE_URL}/products`, {
+    
+    let body;
+    let headers = {
+      'Authorization': `Bearer ${token}`
+    };
+
+    if (imageFile) {
+      // Use FormData for file upload
+      body = new FormData();
+      Object.keys(productData).forEach(key => {
+        if (productData[key] !== null && productData[key] !== undefined) {
+          // Convert boolean to string for FormData
+          const value = typeof productData[key] === 'boolean' ? String(productData[key]) : productData[key];
+          body.append(key, value);
+        }
+      });
+      body.append('image', imageFile);
+    } else {
+      // Use regular JSON if no image
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(productData);
+    }
+
+    console.log('Creating product - headers:', headers);
+    console.log('Creating product - body type:', body.constructor.name);
+    if (imageFile) {
+      console.log('Image file:', imageFile.name, imageFile.type, imageFile.size);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/products/add`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(productData)
+      headers,
+      body
     });
 
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Create product error response:', errorText);
       throw new Error('Failed to create product');
     }
     return await response.json();
   }
 
   // Admin only: Update product
-  async updateProduct(productId, productData) {
+  async updateProduct(productId, productData, imageFile = null) {
     const token = localStorage.getItem('token');
+    
+    let body;
+    let headers = {
+      'Authorization': `Bearer ${token}`
+    };
+
+    if (imageFile) {
+      // Use FormData for file upload
+      body = new FormData();
+      Object.keys(productData).forEach(key => {
+        if (productData[key] !== null && productData[key] !== undefined) {
+          // Convert boolean to string for FormData
+          const value = typeof productData[key] === 'boolean' ? String(productData[key]) : productData[key];
+          body.append(key, value);
+        }
+      });
+      body.append('image', imageFile);
+    } else {
+      // Use regular JSON if no image
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(productData);
+    }
+
+    console.log('Updating product - headers:', headers);
+    console.log('Updating product - body type:', body.constructor.name);
+    if (imageFile) {
+      console.log('Image file:', imageFile.name, imageFile.type, imageFile.size);
+    }
+
     const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(productData)
+      headers,
+      body
     });
 
+    console.log('Update response status:', response.status);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Update product error response:', errorText);
       throw new Error('Failed to update product');
     }
     return await response.json();

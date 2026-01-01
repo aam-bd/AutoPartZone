@@ -14,7 +14,7 @@ console.log("dotenv loaded MONGO_URI:", process.env.MONGO_URI ? "(present)" : "(
 // Import the app after dotenv config so environment variables are available
 const { default: app } = await import("./src/app.js");
 
-const PORT = process.env.PORT || 5003;
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`MAIN SERVER WITH AUTH ROUTES running on port ${PORT}`);

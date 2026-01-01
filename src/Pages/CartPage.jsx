@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useVehicle } from '../context/VehicleContext';
+import cartService from '../services/cartService.jsx';
 
 // --- Icons (Placeholders) ---
 const RemoveIcon = () => (
@@ -19,17 +20,39 @@ const TruckIcon = () => (
 // --- Component: Individual Cart Item Row ---
 const CartItem = ({ item }) => {
     const { updateCartQuantity, removeFromCart } = useCart();
+    
+    // Get the correct product ID for API calls
+    const productId = item.productId || item._id || item.id;
+    
+    // Image loading state
+    const [imageLoaded, setImageLoaded] = React.useState(false);
 
     return (
         <div className="flex items-center justify-between py-4 border-b">
             
             {/* Product Info */}
             <div className="flex items-center space-x-4 w-1/2">
-                {/* Image Placeholder (replace with actual image) */}
-                <img src={item.image || '/assets/default-part.jpg'} alt={item.name} className="w-16 h-16 object-cover rounded" />
+                {/* Product Image */}
+                <img 
+                  src={
+                    item.image 
+                      ? (item.image.startsWith('http') ? item.image : `http://localhost:5000${item.image}`)
+                      : '/assets/default-part.jpg'
+                  } 
+                  alt={item.name} 
+                  className="w-16 h-16 object-cover rounded"
+                  onLoad={(e) => {
+                    e.target.style.opacity = '1';
+                  }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/assets/default-part.jpg';
+                  }}
+                  style={{ opacity: 0 }}
+                />
                 
                 <div>
-                    <Link to={`/product/${item.id}`} className="font-bold text-gray-800 hover:text-red-600 transition-colors">
+                    <Link to={`/product/${productId}`} className="font-bold text-gray-800 hover:text-red-600 transition-colors">
                         {item.name}
                     </Link>
                     <p className="text-sm text-gray-500">Brand: {item.brand || 'Generic'}</p>
@@ -38,29 +61,45 @@ const CartItem = ({ item }) => {
 
             {/* Quantity Controls */}
             <div className="w-1/6 text-center">
-                <input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => updateCartQuantity(item.id, parseInt(e.target.value))}
-                    className="w-16 p-2 border rounded-lg text-center focus:ring-red-500"
-                />
+                <div className="flex items-center justify-center space-x-2">
+                    <button
+                        type="button"
+                        onClick={() => updateCartQuantity(productId, Math.max(1, item.quantity - 1))}
+                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+                    >
+                        -
+                    </button>
+                    <input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => updateCartQuantity(productId, parseInt(e.target.value) || 1)}
+                        className="w-16 p-2 border rounded-lg text-center focus:ring-red-500 text-center"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => updateCartQuantity(productId, item.quantity + 1)}
+                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+                    >
+                        +
+                    </button>
+                </div>
             </div>
             
             {/* Price */}
             <div className="w-1/6 text-right">
-                <span className="font-semibold text-gray-800">${item.price.toFixed(2)}</span>
+                <span className="font-semibold text-gray-800">৳{(item.price || 0).toFixed(2)}</span>
             </div>
             
             {/* Total Price for Item */}
             <div className="w-1/6 text-right">
-                <span className="font-bold text-red-600">${(item.price * item.quantity).toFixed(2)}</span>
+                <span className="font-bold text-red-600">৳{((item.price || 0) * (item.quantity || 0)).toFixed(2)}</span>
             </div>
 
             {/* Remove Button */}
             <div className="w-auto ml-4">
                 <button 
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => removeFromCart(productId)}
                     className="text-gray-400 hover:text-red-600 transition-colors"
                     title="Remove item"
                 >
@@ -74,35 +113,51 @@ const CartItem = ({ item }) => {
 // --- Main Component: CartPage ---
 const CartPage = () => {
     // Get state from contexts
-    const { cartItems, totalPrice, cartCount, addToCart } = useCart();
+    const { cartItems, totalPrice, cartCount, addToCart, clearCart, loadCart } = useCart();
     const { selectedVehicle } = useVehicle();
+    
+
 
     const shippingCost = totalPrice >= 140 ? 0 : 15.00; // Free shipping over $140
     const grandTotal = totalPrice + shippingCost;
+
+    // Debug function to clear localStorage cart data
+    const clearLocalStorageCart = () => {
+        // Clear only cart-related data, NOT authentication data
+        localStorage.removeItem('localCart');
+        localStorage.removeItem('cart');
+        localStorage.removeItem('cartItems');
+        // Do NOT remove token, user, or clear entire localStorage
+        clearCart();
+        loadCart();
+        window.location.reload();
+    };
 
     if (cartCount === 0) {
         return (
             <div className="container mx-auto px-4 py-16 text-center">
                 <h1 className="text-4xl font-extrabold text-gray-800 mb-4">Your Cart is Empty</h1>
                 <p className="text-lg text-gray-600 mb-8">Start shopping to find perfect parts for your vehicle.</p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <Link to="/" className="bg-red-600 text-white px-8 py-3 rounded-full font-bold uppercase hover:bg-red-700 transition-colors">
-                        Start Shopping
-                    </Link>
-                    <button 
-                        onClick={() => {
-                            // Add some demo products
-                            const demoProducts = [
-                                { _id: '1', name: 'Car Side View Mirror', price: 120, image: '/assets/default-part.jpg' },
-                                { _id: '2', name: 'Car Brake Pads', price: 85, image: '/assets/default-part.jpg' }
-                            ];
-                            demoProducts.forEach(product => addToCart(product, 1));
-                        }}
-                        className="bg-blue-600 text-white px-8 py-3 rounded-full font-bold uppercase hover:bg-blue-700 transition-colors"
-                    >
-                        Add Demo Products
-                    </button>
-                </div>
+                <Link to="/" className="bg-red-600 text-white px-8 py-3 rounded-full font-bold uppercase hover:bg-red-700 transition-colors">
+                    Start Shopping
+                </Link>
+                {/* Debug clear button - only in development */}
+                {process.env.NODE_ENV === 'development' && (
+                    <>
+                        <button 
+                            onClick={clearLocalStorageCart}
+                            className="mt-4 block w-full bg-gray-600 text-white px-8 py-3 rounded-full font-bold uppercase hover:bg-gray-700 transition-colors"
+                        >
+                            Clear All Cart Data (Debug)
+                        </button>
+                        <button 
+                            onClick={enrichCartItems}
+                            className="mt-2 block w-full bg-blue-600 text-white px-8 py-3 rounded-full font-bold uppercase hover:bg-blue-700 transition-colors"
+                        >
+                            Enrich Cart Items (Debug)
+                        </button>
+                    </>
+                )}
             </div>
         );
     }
@@ -159,19 +214,19 @@ const CartPage = () => {
                         <div className="space-y-2 text-gray-700">
                             <div className="flex justify-between">
                                 <span>Subtotal:</span>
-                                <span>${totalPrice.toFixed(2)}</span>
+                                <span>৳{totalPrice.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span>Shipping:</span>
                                 <span className={shippingCost === 0 ? 'text-green-600 font-semibold' : ''}>
-                                    {shippingCost === 0 ? 'FREE' : `$${shippingCost.toFixed(2)}`}
+                                    {shippingCost === 0 ? 'FREE' : `৳${shippingCost.toFixed(2)}`}
                                 </span>
                             </div>
                         </div>
                         
                         <div className="border-t pt-4 mt-4 flex justify-between text-2xl font-extrabold text-gray-900">
                             <span>Grand Total:</span>
-                            <span>${grandTotal.toFixed(2)}</span>
+                            <span>৳{grandTotal.toFixed(2)}</span>
                         </div>
                         
                         {/* Checkout Button */}

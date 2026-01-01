@@ -152,7 +152,9 @@ export default function ProductPage() {
         <div className="space-y-4">
           <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
             <img 
-              src={product.images[selectedImage]} 
+              src={product.images[selectedImage] 
+                 ? `http://localhost:5000${product.images[selectedImage]}` 
+                 : '/assets/default-part.jpg'} 
               alt={product.name}
               className="w-full h-full object-cover"
             />

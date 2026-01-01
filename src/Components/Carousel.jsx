@@ -47,7 +47,7 @@ const Carousel = ({ images }) => {
   return (
     <div className="relative w-full" data-carousel="slide">
       {/* Carousel wrapper */}
-      <div className="relative h-64 overflow-hidden md:h-96 lg:h-[32rem]">
+      <div className="relative h-[28rem] overflow-hidden md:h-[39rem] lg:h-[50rem]">
         {images.map((image, index) => (
           <div
             key={index}

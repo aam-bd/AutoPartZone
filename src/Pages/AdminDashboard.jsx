@@ -20,6 +20,117 @@ import {
   LogOut
 } from 'lucide-react';
 
+// Orders Management Section
+const OrdersSection = ({ token }) => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch('/api/orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+
+      const data = await response.json();
+      setOrders(data.orders || data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateOrderStatus = async (orderId, status) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update order status');
+      }
+
+      fetchOrders(); // Refresh orders
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  if (loading) return <div>Loading orders...</div>;
+  if (error) return <div className="alert alert-error">{error}</div>;
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">Orders Management</h3>
+      <div className="overflow-x-auto">
+        <table className="table table-zebra w-full">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Email</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map((order) => (
+              <tr key={order._id}>
+                <td>{order._id.slice(-8)}</td>
+                <td>{order.userId?.name || 'N/A'}</td>
+                <td>{order.userId?.email || 'N/A'}</td>
+                <td>৳{(order.totalAmount || order.total || 0).toFixed(2)}</td>
+                <td>
+                  <span className={`badge badge-${getStatusColor(order.status)}`}>
+                    {order.status}
+                  </span>
+                </td>
+                <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                <td>
+                  <select
+                    className="select select-xs select-bordered"
+                    value={order.status}
+                    onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {orders.length === 0 && (
+          <p className="text-center py-8 text-gray-500">No orders found</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+
 const AdminDashboard = () => {
   const { user, token } = useAuth();
   const navigate = useNavigate();
@@ -38,9 +149,6 @@ const AdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      console.log('Admin token:', token);
-      console.log('Admin user:', user);
-      
       const response = await fetch('/api/analytics/dashboard', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -64,9 +172,9 @@ const AdminDashboard = () => {
 
   const quickActions = [
     { 
-      label: 'Add Product', 
+      label: 'Manage Products', 
       icon: Plus, 
-      action: () => navigate('/admin/products/add'),
+      action: () => navigate('/admin/products'),
       color: 'bg-green-600 hover:bg-green-700'
     },
     { 
@@ -75,12 +183,7 @@ const AdminDashboard = () => {
       action: () => setActiveSection('orders'),
       color: 'bg-blue-600 hover:bg-blue-700'
     },
-    { 
-      label: 'Manage Users', 
-      icon: Users, 
-      action: () => setActiveSection('users'),
-      color: 'bg-purple-600 hover:bg-purple-700'
-    },
+
     { 
       label: 'Generate Reports', 
       icon: BarChart3, 
@@ -91,9 +194,9 @@ const AdminDashboard = () => {
 
   const sidebarItems = [
     { id: 'overview', label: 'Dashboard Overview', icon: LayoutDashboard },
-    { id: 'products', label: 'Products', icon: Package },
+    { id: 'products', label: 'Products', icon: Package, route: '/admin/products' },
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
-    { id: 'users', label: 'Users', icon: Users },
+    { id: 'users', label: 'Users', icon: Users, route: '/admin/users' },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   ];
 
@@ -133,7 +236,7 @@ const AdminDashboard = () => {
             {sidebarItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveSection(item.id)}
+                onClick={() => item.route ? navigate(item.route) : setActiveSection(item.id)}
                 className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-colors ${
                   activeSection === item.id
                     ? 'bg-blue-600 text-white'
@@ -464,12 +567,18 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {activeSection !== 'overview' && (
+            {activeSection === 'orders' && (
+              <OrdersSection token={token} />
+            )}
+
+
+
+            {activeSection === 'analytics' && (
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">
                   {sidebarItems.find(item => item.id === activeSection)?.label}
                 </h3>
-                <p className="text-gray-600">This section is under development. Please use the overview tab for now.</p>
+                <p className="text-gray-600">Advanced analytics section coming soon.</p>
               </div>
             )}
           </main>

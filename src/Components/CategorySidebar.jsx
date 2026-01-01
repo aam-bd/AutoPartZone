@@ -14,9 +14,14 @@ const categories = [
     { name: "Suspension & Steering", path: "/category/suspension", icon: SuspendIcon },
     { name: "Brakes & Traction", path: "/category/brakes", icon: BrakeIcon },
     { name: "Filters & Fluids", path: "/category/filters", icon: FiltersIcon },
-    { name: "Tools & Equipment", path: "/category/tools", icon: AccessoriesIcon },
     { name: "Lighting & Electrical", path: "/category/lighting", icon: FiltersIcon }, 
-    { name: "Interior & Accessories", path: "/category/interior", icon: AccessoriesIcon },
+    { name: "Mirrors", path: "/category/mirrors", icon: AccessoriesIcon },
+    { name: "Wipers", path: "/category/wipers", icon: AccessoriesIcon },
+    { name: "Cooling", path: "/category/cooling", icon: AccessoriesIcon },
+    { name: "Ignition", path: "/category/ignition", icon: AccessoriesIcon },
+    { name: "Transmission", path: "/category/transmission", icon: AccessoriesIcon },
+    { name: "Exterior", path: "/category/exterior", icon: AccessoriesIcon },
+    { name: "Interior", path: "/category/interior", icon: AccessoriesIcon },
     // Add more categories as needed...
 ];
 

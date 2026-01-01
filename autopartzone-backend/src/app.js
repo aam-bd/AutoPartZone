@@ -39,14 +39,9 @@ app.use(helmet({
 // app.use(mongoSanitize()); // Against NoSQL injection
 // app.use(xss()); // Against XSS attacks
 
-// CORS configuration
+// CORS configuration - allow all origins for development
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
-    'http://localhost:5192',
-    'http://localhost:3000',
-    'http://localhost:5173'
-  ],
+  origin: '*', // Allow all origins for development
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -55,6 +50,9 @@ app.use(cors({
 // Body parser
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// Serve static files (uploaded images)
+app.use('/uploads', express.static('uploads'));
 
 // Connect MongoDB
 connectDB();

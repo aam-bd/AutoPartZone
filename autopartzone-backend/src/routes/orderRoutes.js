@@ -32,6 +32,7 @@ router.get("/:id", authenticate, getOrderById);
 
 // Admin/Staff: update order status
 router.patch("/status/:id", authenticate, authorize("admin", "staff"), updateStatus);
+router.put("/:id/status", authenticate, authorize("admin"), updateStatus);
 
 // Customer: cancel order
 router.patch("/:id/cancel", authenticate, cancelOrder);
