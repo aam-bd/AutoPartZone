@@ -20,6 +20,7 @@ class CartService {
 
       if (response.status === 401) {
         // Clear invalid token and fallback to local storage
+        console.warn('Invalid token detected, clearing authentication');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         await this.enrichCartWithProductDetails();
@@ -50,8 +51,14 @@ class CartService {
       return cart;
     } catch (error) {
       console.error('Error fetching cart:', error);
-      await this.enrichCartWithProductDetails();
-      return this.getLocalCart();
+      // For network errors, try local storage fallback
+      try {
+        await this.enrichCartWithProductDetails();
+        return this.getLocalCart();
+      } catch (localError) {
+        console.error('Error with local cart fallback:', localError);
+        return this.getLocalCart();
+      }
     }
   }
 
@@ -220,7 +227,20 @@ class CartService {
         }
 
         const data = await response.json();
-        return data.cart || data;
+        const cart = data.cart || data;
+        // Enrich cart items with product details if needed
+        if (cart.items && cart.items.length > 0) {
+          cart.items = cart.items.map(item => ({
+            ...item,
+            name: item.name || (item.productId?.name) || `Product ${item.productId}`,
+            brand: item.brand || (item.productId?.brand) || 'Generic',
+            image: item.image || (item.productId?.image) || '/assets/default-part.jpg',
+            price: item.price || (item.productId?.price) || 0,
+            productId: item.productId?._id || item.productId,
+            quantity: item.quantity || item.qty || 1
+          }));
+        }
+        return cart;
       } else {
         // Non-logged in user - update local storage
         const cart = this.getLocalCart();
@@ -285,7 +305,20 @@ class CartService {
       }
 
       const data = await response.json();
-      return data.cart || data;
+      const cart = data.cart || data;
+      // Enrich cart items with product details if needed
+      if (cart.items && cart.items.length > 0) {
+        cart.items = cart.items.map(item => ({
+          ...item,
+          name: item.name || (item.productId?.name) || `Product ${item.productId}`,
+          brand: item.brand || (item.productId?.brand) || 'Generic',
+          image: item.image || (item.productId?.image) || '/assets/default-part.jpg',
+          price: item.price || (item.productId?.price) || 0,
+          productId: item.productId?._id || item.productId,
+          quantity: item.quantity || item.qty || 1
+        }));
+      }
+      return cart;
     } catch (error) {
       console.error('Error removing from cart:', error);
       // Fallback to local storage

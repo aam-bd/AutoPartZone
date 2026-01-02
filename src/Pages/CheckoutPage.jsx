@@ -38,7 +38,7 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const shippingCost = totalPrice >= 140 ? 0 : 15.00;
+  const shippingCost = totalPrice >= 10000 ? 0 : 15.00;
   const tax = totalPrice * 0.05;
   const grandTotal = totalPrice + shippingCost + tax;
 
@@ -110,7 +110,7 @@ const CheckoutPage = () => {
         return;
       }
 
-      const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/orders`;
+      const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/orders/place`;
       console.log('Making order request to:', apiUrl);
       
       const response = await fetch(apiUrl, {
@@ -121,7 +121,7 @@ const CheckoutPage = () => {
         },
         body: JSON.stringify({
           items: cartItems.map(item => ({
-            productId: item.productId || item.id,
+            productId: item.productId?._id || item.productId || item.id,
             quantity: item.quantity,
             price: item.price
           })),
@@ -137,18 +137,13 @@ const CheckoutPage = () => {
       });
 
       if (!response.ok) {
-        // Check if response is HTML (404 page) instead of JSON
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('text/html')) {
-          throw new Error('Order service is not available. Please try again later.');
-        }
-        
         const errorText = await response.text();
+        console.error('Checkout error response:', errorText);
         try {
           const errorData = JSON.parse(errorText);
           throw new Error(errorData.message || 'Failed to place order');
         } catch {
-          throw new Error('Failed to place order. Please contact support.');
+          throw new Error(errorText || 'Failed to place order. Please contact support.');
         }
       }
 
@@ -164,11 +159,20 @@ const CheckoutPage = () => {
 
       const orderData = await response.json();
       const orderId = orderData.order?.id || orderData.id || 'ORD-' + Date.now();
+      console.log('🔥 Setting localStorage with orderId:', orderId);
+      console.log('🔥 Full orderData:', orderData);
       localStorage.setItem('lastOrderId', orderId);
       
       // Store order details for confirmation page
+      console.log('📝 Storing order in localStorage:', {
+        id: orderId,
+        orderData: orderData,
+        orderNumber: orderData.order?.orderNumber
+      });
       localStorage.setItem('lastOrder', JSON.stringify({
         id: orderId,
+        _id: orderData.order?._id || orderId,
+        orderNumber: orderData.order?.orderNumber || orderId,
         items: cartItems,
         subtotal: totalPrice,
         tax,
@@ -228,9 +232,9 @@ const CheckoutPage = () => {
         </div>
       )}
 
-      {/* Order Summary */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+       {/* Order Summary */}
+       <div className="bg-red-50 rounded-lg shadow-lg border-2 border-red-200 p-6 mb-6">
+         <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
         <div className="space-y-2 mb-4">
           {cartItems.map((item, index) => (
             <div key={index} className="flex justify-between text-sm">
@@ -263,278 +267,278 @@ const CheckoutPage = () => {
 
       {/* Checkout Form */}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Shipping Information */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
-            <div className="space-y-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Full Name</span>
-                </label>
-                <input 
-                  type="text" 
-                  value={shippingAddress.fullName}
-                  onChange={(e) => handleInputChange(e, 'shipping', 'fullName')}
-                  className="input input-bordered w-full" 
-                  required 
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Email</span>
-                </label>
-                <input 
-                  type="email" 
-                  value={shippingAddress.email}
-                  onChange={(e) => handleInputChange(e, 'shipping', 'email')}
-                  className="input input-bordered w-full" 
-                  required 
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Phone Number</span>
-                </label>
-                <input 
-                  type="tel" 
-                  value={shippingAddress.phone}
-                  onChange={(e) => handleInputChange(e, 'shipping', 'phone')}
-                  className="input input-bordered w-full" 
-                  required 
-                />
-              </div>
-            </div>
-          </div>
+           {/* Shipping Information */}
+           <div className="space-y-6">
+             <div className="bg-red-50 rounded-lg shadow-lg border-2 border-red-200 p-6">
+               <h2 className="text-xl font-semibold mb-4 text-gray-800">Shipping Information</h2>
+               <div className="space-y-4">
+                 <div className="form-control">
+                   <label className="label">
+                     <span className="label-text font-semibold text-gray-700">Full Name</span>
+                   </label>
+                   <input 
+                     type="text" 
+                     value={shippingAddress.fullName}
+                     onChange={(e) => handleInputChange(e, 'shipping', 'fullName')}
+                     className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                     required 
+                   />
+                 </div>
+                 <div className="form-control">
+                   <label className="label">
+                     <span className="label-text font-semibold text-gray-700">Email</span>
+                   </label>
+                   <input 
+                     type="email" 
+                     value={shippingAddress.email}
+                     onChange={(e) => handleInputChange(e, 'shipping', 'email')}
+                     className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                     required 
+                   />
+                 </div>
+                 <div className="form-control">
+                   <label className="label">
+                     <span className="label-text font-semibold text-gray-700">Phone Number</span>
+                   </label>
+                   <input 
+                     type="tel" 
+                     value={shippingAddress.phone}
+                     onChange={(e) => handleInputChange(e, 'shipping', 'phone')}
+                     className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                     required 
+                   />
+                 </div>
+               </div>
+             </div>
 
-          {/* Shipping Address */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
-            <div className="space-y-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Street Address</span>
-                </label>
-                <input 
-                  type="text" 
-                  value={shippingAddress.street}
-                  onChange={(e) => handleInputChange(e, 'shipping', 'street')}
-                  className="input input-bordered" 
-                  required 
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">City</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    value={shippingAddress.city}
-                    onChange={(e) => handleInputChange(e, 'shipping', 'city')}
-                    className="input input-bordered" 
-                    required 
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">State</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    value={shippingAddress.state}
-                    onChange={(e) => handleInputChange(e, 'shipping', 'state')}
-                    className="input input-bordered" 
-                    required 
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">ZIP Code</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    value={shippingAddress.zipCode}
-                    onChange={(e) => handleInputChange(e, 'shipping', 'zipCode')}
-                    className="input input-bordered" 
-                    required 
-                  />
-                </div>
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Country</span>
-                </label>
-                <select
-                  value={shippingAddress.country}
-                  onChange={(e) => handleInputChange(e, 'shipping', 'country')}
-                  className="select select-bordered w-full"
-                >
-                  <option value="Bangladesh">Bangladesh</option>
-                  <option value="United States">United States</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                  <option value="India">India</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
+             {/* Shipping Address */}
+             <div className="bg-red-50 rounded-lg shadow-lg border-2 border-red-200 p-6">
+               <h2 className="text-xl font-semibold mb-4 text-gray-800">Shipping Address</h2>
+               <div className="space-y-4">
+                 <div className="form-control">
+                   <label className="label">
+                     <span className="label-text font-semibold text-gray-700">Street Address</span>
+                   </label>
+                   <input 
+                     type="text" 
+                     value={shippingAddress.street}
+                     onChange={(e) => handleInputChange(e, 'shipping', 'street')}
+                     className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                     required 
+                   />
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                   <div className="form-control">
+                     <label className="label">
+                       <span className="label-text font-semibold text-gray-700">City</span>
+                     </label>
+                     <input 
+                       type="text" 
+                       value={shippingAddress.city}
+                       onChange={(e) => handleInputChange(e, 'shipping', 'city')}
+                       className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                       required 
+                     />
+                   </div>
+                   <div className="form-control">
+                     <label className="label">
+                       <span className="label-text font-semibold text-gray-700">State</span>
+                     </label>
+                     <input 
+                       type="text" 
+                       value={shippingAddress.state}
+                       onChange={(e) => handleInputChange(e, 'shipping', 'state')}
+                       className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                       required 
+                     />
+                   </div>
+                   <div className="form-control">
+                     <label className="label">
+                       <span className="label-text font-semibold text-gray-700">ZIP Code</span>
+                     </label>
+                     <input 
+                       type="text" 
+                       value={shippingAddress.zipCode}
+                       onChange={(e) => handleInputChange(e, 'shipping', 'zipCode')}
+                       className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                       required 
+                     />
+                   </div>
+                 </div>
+                 <div className="form-control">
+                   <label className="label">
+                     <span className="label-text font-semibold text-gray-700">Country</span>
+                   </label>
+                   <select
+                     value={shippingAddress.country}
+                     onChange={(e) => handleInputChange(e, 'shipping', 'country')}
+                     className="select select-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full"
+                   >
+                     <option value="Bangladesh">Bangladesh</option>
+                     <option value="United States">United States</option>
+                     <option value="United Kingdom">United Kingdom</option>
+                     <option value="India">India</option>
+                   </select>
+                 </div>
+               </div>
+             </div>
+           </div>
 
-        {/* Billing Information */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Billing Information</h2>
-              <div className="form-control">
-                <label className="cursor-pointer label">
-                  <input
-                    type="checkbox"
-                    checked={sameAsShipping}
-                    onChange={(e) => setSameAsShipping(e.target.checked)}
-                    className="checkbox checkbox-primary mr-2"
-                  />
-                  <span className="label-text">Same as shipping</span>
-                </label>
-              </div>
-            </div>
+         {/* Billing Information */}
+         <div className="space-y-6">
+           <div className="bg-red-50 rounded-lg shadow-lg border-2 border-red-200 p-6">
+             <div className="flex items-center justify-between mb-4">
+               <h2 className="text-xl font-semibold text-gray-800">Billing Information</h2>
+               <div className="form-control">
+                 <label className="cursor-pointer label">
+                   <input
+                     type="checkbox"
+                     checked={sameAsShipping}
+                     onChange={(e) => setSameAsShipping(e.target.checked)}
+                     className="checkbox checkbox-primary mr-2"
+                   />
+                   <span className="label-text font-medium text-gray-700">Same as shipping</span>
+                 </label>
+               </div>
+             </div>
 
-            <div className={`space-y-4 ${sameAsShipping ? 'opacity-50 pointer-events-none' : ''}`}>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Full Name</span>
-                </label>
-                <input 
-                  type="text" 
-                  value={billingAddress.fullName}
-                  onChange={(e) => handleInputChange(e, 'billing', 'fullName')}
-                  className="input input-bordered w-full" 
-                  disabled={sameAsShipping}
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Email</span>
-                </label>
-                <input 
-                  type="email" 
-                  value={billingAddress.email}
-                  onChange={(e) => handleInputChange(e, 'billing', 'email')}
-                  className="input input-bordered w-full" 
-                  disabled={sameAsShipping}
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Phone Number</span>
-                </label>
-                <input 
-                  type="tel" 
-                  value={billingAddress.phone}
-                  onChange={(e) => handleInputChange(e, 'billing', 'phone')}
-                  className="input input-bordered w-full" 
-                  disabled={sameAsShipping}
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Street Address</span>
-                </label>
-                <input 
-                  type="text" 
-                  value={billingAddress.street}
-                  onChange={(e) => handleInputChange(e, 'billing', 'street')}
-                  className="input input-bordered" 
-                  disabled={sameAsShipping}
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">City</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    value={billingAddress.city}
-                    onChange={(e) => handleInputChange(e, 'billing', 'city')}
-                    className="input input-bordered" 
-                    disabled={sameAsShipping}
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">State</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    value={billingAddress.state}
-                    onChange={(e) => handleInputChange(e, 'billing', 'state')}
-                    className="input input-bordered" 
-                    disabled={sameAsShipping}
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">ZIP Code</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    value={billingAddress.zipCode}
-                    onChange={(e) => handleInputChange(e, 'billing', 'zipCode')}
-                    className="input input-bordered" 
-                    disabled={sameAsShipping}
-                  />
-                </div>
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Country</span>
-                </label>
-                <select
-                  value={billingAddress.country}
-                  onChange={(e) => handleInputChange(e, 'billing', 'country')}
-                  className="select select-bordered w-full"
-                  disabled={sameAsShipping}
-                >
-                  <option value="Bangladesh">Bangladesh</option>
-                  <option value="United States">United States</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                  <option value="India">India</option>
-                </select>
-              </div>
-            </div>
-          </div>
+             <div className={`space-y-4 ${sameAsShipping ? 'opacity-50 pointer-events-none' : ''}`}>
+               <div className="form-control">
+                 <label className="label">
+                   <span className="label-text font-semibold text-gray-700">Full Name</span>
+                 </label>
+                 <input 
+                   type="text" 
+                   value={billingAddress.fullName}
+                   onChange={(e) => handleInputChange(e, 'billing', 'fullName')}
+                   className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                   disabled={sameAsShipping}
+                 />
+               </div>
+               <div className="form-control">
+                 <label className="label">
+                   <span className="label-text font-semibold text-gray-700">Email</span>
+                 </label>
+                 <input 
+                   type="email" 
+                   value={billingAddress.email}
+                   onChange={(e) => handleInputChange(e, 'billing', 'email')}
+                   className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                   disabled={sameAsShipping}
+                 />
+               </div>
+               <div className="form-control">
+                 <label className="label">
+                   <span className="label-text font-semibold text-gray-700">Phone Number</span>
+                 </label>
+                 <input 
+                   type="tel" 
+                   value={billingAddress.phone}
+                   onChange={(e) => handleInputChange(e, 'billing', 'phone')}
+                   className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                   disabled={sameAsShipping}
+                 />
+               </div>
+               <div className="form-control">
+                 <label className="label">
+                   <span className="label-text font-semibold text-gray-700">Street Address</span>
+                 </label>
+                 <input 
+                   type="text" 
+                   value={billingAddress.street}
+                   onChange={(e) => handleInputChange(e, 'billing', 'street')}
+                   className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                   disabled={sameAsShipping}
+                 />
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div className="form-control">
+                   <label className="label">
+                     <span className="label-text font-semibold text-gray-700">City</span>
+                   </label>
+                   <input 
+                     type="text" 
+                     value={billingAddress.city}
+                     onChange={(e) => handleInputChange(e, 'billing', 'city')}
+                     className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                     disabled={sameAsShipping}
+                   />
+                 </div>
+                 <div className="form-control">
+                   <label className="label">
+                     <span className="label-text font-semibold text-gray-700">State</span>
+                   </label>
+                   <input 
+                     type="text" 
+                     value={billingAddress.state}
+                     onChange={(e) => handleInputChange(e, 'billing', 'state')}
+                     className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                     disabled={sameAsShipping}
+                   />
+                 </div>
+                 <div className="form-control">
+                   <label className="label">
+                     <span className="label-text font-semibold text-gray-700">ZIP Code</span>
+                   </label>
+                   <input 
+                     type="text" 
+                     value={billingAddress.zipCode}
+                     onChange={(e) => handleInputChange(e, 'billing', 'zipCode')}
+                     className="input input-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full" 
+                     disabled={sameAsShipping}
+                   />
+                 </div>
+               </div>
+               <div className="form-control">
+                 <label className="label">
+                   <span className="label-text font-semibold text-gray-700">Country</span>
+                 </label>
+                 <select
+                   value={billingAddress.country}
+                   onChange={(e) => handleInputChange(e, 'billing', 'country')}
+                   className="select select-bordered border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 w-full"
+                   disabled={sameAsShipping}
+                 >
+                   <option value="Bangladesh">Bangladesh</option>
+                   <option value="United States">United States</option>
+                   <option value="United Kingdom">United Kingdom</option>
+                   <option value="India">India</option>
+                 </select>
+               </div>
+             </div>
+           </div>
 
-          {/* Payment Method */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
-            <div className="space-y-3">
-              <div className="form-control">
-                <label className="cursor-pointer label">
-                  <input
-                    type="radio"
-                    value="cod"
-                    checked={paymentMethod === 'cod'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="radio radio-primary mr-2"
-                  />
-                  <span className="label-text">Cash on Delivery (COD)</span>
-                </label>
-              </div>
-              <div className="form-control">
-                <label className="cursor-pointer label">
-                  <input
-                    type="radio"
-                    value="card"
-                    checked={paymentMethod === 'card'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="radio radio-primary mr-2"
-                  />
-                  <span className="label-text">Credit/Debit Card</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
+           {/* Payment Method */}
+           <div className="bg-red-50 rounded-lg shadow-lg border-2 border-red-200 p-6">
+             <h2 className="text-xl font-semibold mb-4 text-gray-800">Payment Method</h2>
+             <div className="space-y-3">
+               <div className="form-control">
+                 <label className="cursor-pointer label">
+                   <input
+                     type="radio"
+                     value="cod"
+                     checked={paymentMethod === 'cod'}
+                     onChange={(e) => setPaymentMethod(e.target.value)}
+                     className="radio radio-primary mr-2"
+                   />
+                   <span className="label-text font-medium text-gray-700">Cash on Delivery (COD)</span>
+                 </label>
+               </div>
+               <div className="form-control">
+                 <label className="cursor-pointer label">
+                   <input
+                     type="radio"
+                     value="card"
+                     checked={paymentMethod === 'card'}
+                     onChange={(e) => setPaymentMethod(e.target.value)}
+                     className="radio radio-primary mr-2"
+                   />
+                   <span className="label-text font-medium text-gray-700">Credit/Debit Card</span>
+                 </label>
+               </div>
+             </div>
+           </div>
+         </div>
 
         {/* Submit Button */}
         <div className="lg:col-span-2 flex gap-4">

@@ -19,13 +19,16 @@ const TruckIcon = () => (
 
 // --- Component: Individual Cart Item Row ---
 const CartItem = ({ item }) => {
-    const { updateCartQuantity, removeFromCart } = useCart();
+    const { updateCartQuantity, removeFromCart, operationLoading } = useCart();
     
     // Get the correct product ID for API calls
     const productId = item.productId || item._id || item.id;
     
     // Image loading state
     const [imageLoaded, setImageLoaded] = React.useState(false);
+    
+    // Local loading state for this item
+    const [itemLoading, setItemLoading] = React.useState(false);
 
     return (
         <div className="flex items-center justify-between py-4 border-b">
@@ -65,23 +68,30 @@ const CartItem = ({ item }) => {
                     <button
                         type="button"
                         onClick={() => updateCartQuantity(productId, Math.max(1, item.quantity - 1))}
-                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+                        disabled={operationLoading || itemLoading}
+                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        -
+                        {operationLoading || itemLoading ? (
+                            <div className="animate-spin rounded-full h-3 w-3 border border-gray-600 border-t-transparent"></div>
+                        ) : '-'}
                     </button>
                     <input
                         type="number"
                         min="1"
                         value={item.quantity}
                         onChange={(e) => updateCartQuantity(productId, parseInt(e.target.value) || 1)}
-                        className="w-16 p-2 border rounded-lg text-center focus:ring-red-500 text-center"
+                        disabled={operationLoading || itemLoading}
+                        className="w-16 p-2 border rounded-lg text-center focus:ring-red-500 text-center disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <button
                         type="button"
                         onClick={() => updateCartQuantity(productId, item.quantity + 1)}
-                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+                        disabled={operationLoading || itemLoading}
+                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        +
+                        {operationLoading || itemLoading ? (
+                            <div className="animate-spin rounded-full h-3 w-3 border border-gray-600 border-t-transparent"></div>
+                        ) : '+'}
                     </button>
                 </div>
             </div>
@@ -100,10 +110,15 @@ const CartItem = ({ item }) => {
             <div className="w-auto ml-4">
                 <button 
                     onClick={() => removeFromCart(productId)}
-                    className="text-gray-400 hover:text-red-600 transition-colors"
+                    disabled={operationLoading || itemLoading}
+                    className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Remove item"
                 >
-                    <RemoveIcon />
+                    {operationLoading || itemLoading ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border border-gray-600 border-t-transparent"></div>
+                    ) : (
+                        <RemoveIcon />
+                    )}
                 </button>
             </div>
         </div>
@@ -118,7 +133,7 @@ const CartPage = () => {
     
 
 
-    const shippingCost = totalPrice >= 140 ? 0 : 15.00; // Free shipping over $140
+    const shippingCost = totalPrice >= 10000 ? 0 : 15.00; // Free shipping over ৳10,000
     const grandTotal = totalPrice + shippingCost;
 
     // Debug function to clear localStorage cart data
@@ -150,12 +165,7 @@ const CartPage = () => {
                         >
                             Clear All Cart Data (Debug)
                         </button>
-                        <button 
-                            onClick={enrichCartItems}
-                            className="mt-2 block w-full bg-blue-600 text-white px-8 py-3 rounded-full font-bold uppercase hover:bg-blue-700 transition-colors"
-                        >
-                            Enrich Cart Items (Debug)
-                        </button>
+
                     </>
                 )}
             </div>
@@ -171,10 +181,10 @@ const CartPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 {/* 1. Left Column: Cart Items List */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-xl">
+                <div className="lg:col-span-2 glass-card p-6 rounded-xl shadow-2xl border-red-200/30">
                     
                     {/* Header Row */}
-                    <div className="flex justify-between font-bold text-gray-600 py-2 border-b-2">
+                    <div className="flex justify-between font-bold text-red-700 py-2 border-b-2 border-red-200">
                         <span className="w-1/2">Product</span>
                         <span className="w-1/6 text-center">Qty</span>
                         <span className="w-1/6 text-right">Price</span>
@@ -191,43 +201,43 @@ const CartPage = () => {
                 {/* 2. Right Column: Summary and Checkout */}
                 <div className="lg:col-span-1 space-y-6">
                     
-                    {/* Vehicle Fitment Status (Reiterated for safety) */}
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg shadow-md">
-                        <h3 className="font-bold text-red-700 mb-2 flex items-center">
-                            <TruckIcon /> Fitment Check
-                        </h3>
-                        {selectedVehicle ? (
-                            <p className="text-sm text-gray-700">
-                                Currently shopping for: <span className="font-semibold">{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}</span>. All items checked for fitment.
-                            </p>
-                        ) : (
-                            <p className="text-sm text-red-700 font-semibold">
-                                Vehicle not selected. Please select your vehicle on the homepage to guarantee fitment.
-                            </p>
-                        )}
-                    </div>
+                     {/* Vehicle Fitment Status (Reiterated for safety) */}
+                     <div className="glass-card p-4 rounded-lg shadow-lg border-red-200/30">
+                         <h3 className="font-bold text-red-800 mb-2 flex items-center">
+                             <TruckIcon /> Fitment Check
+                         </h3>
+                         {selectedVehicle ? (
+                             <p className="text-sm text-red-700">
+                                 Currently shopping for: <span className="font-semibold">{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}</span>. All items checked for fitment.
+                             </p>
+                         ) : (
+                             <p className="text-sm text-red-700 font-semibold">
+                                 Vehicle not selected. Please select your vehicle on the homepage to guarantee fitment.
+                             </p>
+                         )}
+                     </div>
                     
-                    {/* Cart Summary */}
-                    <div className="bg-white p-6 rounded-lg shadow-xl border-t-4 border-red-600">
-                        <h3 className="text-xl font-bold mb-4">Order Summary</h3>
+                     {/* Cart Summary */}
+                     <div className="glass-card p-6 rounded-xl shadow-2xl border-2 border-red-200/30 border-t-4 border-red-600">
+                         <h3 className="text-xl font-bold mb-4 text-red-800">Order Summary</h3>
                         
-                        <div className="space-y-2 text-gray-700">
-                            <div className="flex justify-between">
-                                <span>Subtotal:</span>
-                                <span>৳{totalPrice.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>Shipping:</span>
-                                <span className={shippingCost === 0 ? 'text-green-600 font-semibold' : ''}>
-                                    {shippingCost === 0 ? 'FREE' : `৳${shippingCost.toFixed(2)}`}
-                                </span>
-                            </div>
-                        </div>
+                         <div className="space-y-2 text-red-700">
+                             <div className="flex justify-between">
+                                 <span>Subtotal:</span>
+                                 <span>৳{totalPrice.toFixed(2)}</span>
+                             </div>
+                             <div className="flex justify-between">
+                                 <span>Shipping:</span>
+                                 <span className={shippingCost === 0 ? 'text-green-600 font-semibold' : ''}>
+                                     {shippingCost === 0 ? 'FREE' : `৳${shippingCost.toFixed(2)}`}
+                                 </span>
+                             </div>
+                         </div>
                         
-                        <div className="border-t pt-4 mt-4 flex justify-between text-2xl font-extrabold text-gray-900">
-                            <span>Grand Total:</span>
-                            <span>৳{grandTotal.toFixed(2)}</span>
-                        </div>
+                         <div className="border-t border-red-200 pt-4 mt-4 flex justify-between text-2xl font-extrabold text-red-800">
+                             <span>Grand Total:</span>
+                             <span>৳{grandTotal.toFixed(2)}</span>
+                         </div>
                         
                         {/* Checkout Button */}
                         <Link to="/checkout" className="mt-6 block w-full bg-red-600 text-white text-center py-3 rounded-full font-bold uppercase hover:bg-red-700 transition-colors shadow-lg">

@@ -62,7 +62,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
-  const brandColor = "#90281F";
+  const brandColor = "#dc2626";
 
   // --- Scroll effect ---
   useEffect(() => {
@@ -90,37 +90,40 @@ const Navbar = () => {
   return (
     <nav
       className={`fixed w-full z-50 transition-all duration-300 ease-in-out ${
-        scrolled ? "bg-white/95 backdrop-blur-md shadow-md py-2" : "bg-white py-4"
+        scrolled 
+          ? "glass-card shadow-lg py-3 border-b border-red-200/30" 
+          : "bg-transparent py-6"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20">
           {/* --- LOGO --- */}
-          <NavLink to="/" className="flex-shrink-0 flex items-center gap-2 group">
-            <img
-              className="h-12 w-auto transition-transform group-hover:scale-105"
-              src={logo}
-              alt="Logo"
-            />
-            <span className="text-2xl font-extrabold tracking-tight" style={{ color: brandColor }}>
+          <NavLink to="/" className="flex-shrink-0 flex items-center gap-3 group">
+            <div className="relative overflow-hidden rounded-2xl shadow-soft group-hover:shadow-soft-lg transition-all duration-300">
+              <img
+                className="h-14 w-auto transition-transform group-hover:scale-105"
+                src={logo}
+                alt="Logo"
+              />
+            </div>
+            <span className="text-3xl font-extrabold tracking-tight text-red-800 group-hover:text-red-600 transition-colors duration-300">
               AutoPartZone
             </span>
           </NavLink>
 
           {/* --- DESKTOP NAVIGATION --- */}
-          <div className="hidden md:flex space-x-8 items-center">
+          <div className="hidden lg:flex items-center space-x-2">
             {navLinks.map((link) => (
               <NavLink
                 key={link.name}
                 to={link.path}
                 className={({ isActive }) =>
-                  `relative px-1 py-2 text-lg font-bold transition-colors duration-200
-                  after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] 
-                  after:transition-transform after:duration-300 after:scale-x-0 hover:after:scale-x-100
+                  `relative px-4 py-2 text-sm font-semibold transition-all duration-300 rounded-full
+                  hover:bg-red-50 hover:text-red-600
                   ${
                     isActive
-                      ? "text-[#90281F] after:scale-x-100 after:bg-[#90281F]"
-                      : "text-gray-700 hover:text-[#90281F] after:bg-[#90281F]"
+                      ? "text-red-600 bg-red-100 shadow-inner"
+                      : "text-red-700"
                   }`
                 }
               >
@@ -130,44 +133,44 @@ const Navbar = () => {
           </div>
 
           {/* --- RIGHT SIDE: USER PROFILE / LOGIN --- */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-3">
           {user ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <NavLink
                   to="/profile"
-                  className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                   className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-red-700 hover:bg-red-50 hover:text-red-800 transition-all duration-300"
                 >
-                  <div className="p-[2px] rounded-full border-2" style={{ borderColor: brandColor }}>
+                  <div className="p-0.5 rounded-full border-2 border-brand/30">
                     <img
-                      className="h-6 w-6 rounded-full object-cover"
+                      className="h-7 w-7 rounded-full object-cover"
                       src={user.photoURL || noprofile}
                       alt="Profile"
                       onError={(e) => (e.target.src = noprofile)}
                     />
                   </div>
-                  <span>Profile</span>
+                  <span className="hidden xl:block">Profile</span>
                 </NavLink>
-                
+                 
                 {user.role === 'admin' && (
                   <NavLink
                     to="/admin"
-                    className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                  className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-red-700 hover:bg-red-50 hover:text-red-800 transition-all duration-300"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5M15 19.128a9.019 9.019 0 00-2.25 1.394m-4.5 0A9.02 9.02 0 016 19.128m9.75 0a9.02 9.02 0 002.25-1.394" />
                     </svg>
-                    <span>Dashboard</span>
+                    <span className="hidden xl:block">Dashboard</span>
                   </NavLink>
                 )}
-                
+                 
                 <div className="text-right hidden lg:block">
-                  <p className="text-sm font-bold text-gray-900 leading-none">{user.name || "User"}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
+                   <p className="text-sm font-semibold text-red-800 leading-tight tracking-tight">{user.name || "User"}</p>
+                   <p className="text-xs text-red-600 truncate max-w-32">{user.email}</p>
                 </div>
                 <div className="relative group cursor-pointer">
-                  <div className="p-[2px] rounded-full border-2" style={{ borderColor: brandColor }}>
+                  <div className="p-0.5 rounded-full border-2 border-brand shadow-soft group-hover:shadow-soft-lg transition-all duration-300">
                     <img
-                      className="h-9 w-9 rounded-full object-cover"
+                      className="h-10 w-10 rounded-full object-cover"
                       src={user.photoURL || noprofile}
                       alt="Profile"
                       onError={(e) => (e.target.src = noprofile)}
@@ -176,18 +179,16 @@ const Navbar = () => {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium text-white transition-all shadow-sm hover:bg-opacity-90 active:scale-95"
-                  style={{ backgroundColor: brandColor }}
+                  className="btn-premium text-sm px-4 py-2 flex items-center gap-2 hover:scale-105 active:scale-95"
                 >
                   <LogoutIcon />
-                  <span>Logout</span>
+                  <span className="hidden sm:inline">Logout</span>
                 </button>
               </div>
             ) : (
               <NavLink
                 to="/login"
-                className="px-6 py-2 rounded-full text-sm font-bold text-white transition-all shadow-md hover:brightness-110 active:scale-95"
-                style={{ backgroundColor: brandColor }}
+                className="btn-premium text-sm px-6 py-2.5 hover:scale-105 active:scale-95"
               >
                 Login
               </NavLink>
@@ -204,43 +205,47 @@ const Navbar = () => {
       </div>
 
       {/* --- MOBILE MENU --- */}
-      <div
-        className={`md:hidden absolute w-full bg-white shadow-xl border-t transition-all duration-300 ease-in-out overflow-hidden ${
-          isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className="px-4 pt-4 pb-6 space-y-2">
+        <div
+          className={`md:hidden absolute w-full glass-card shadow-2xl border-t border-red-200/30 transition-all duration-300 ease-in-out overflow-hidden ${
+            isMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+          }`}
+        >
+        <div className="px-6 pt-6 pb-8 space-y-3">
           {navLinks.map((link) => (
             <NavLink
               key={link.name}
               to={link.path}
               onClick={() => setIsMenuOpen(false)}
-              className={({ isActive }) =>
-                `block px-4 py-3 rounded-lg text-base font-medium ${
-                  isActive ? "bg-red-50 text-[#90281F]" : "text-gray-700 hover:bg-gray-50"
-                }`
-              }
+               className={({ isActive }) =>
+                 `block px-5 py-3 rounded-2xl text-base font-medium transition-all duration-300 ${
+                   isActive 
+                     ? "text-red-600 bg-red-100 shadow-inner" 
+                     : "text-red-700 hover:bg-red-50 hover:text-red-800"
+                 }`
+               }
             >
               {link.name}
             </NavLink>
           ))}
 
-          <div className="pt-4 border-t border-gray-100">
+          <div className="pt-6 border-t border-slate-200">
             {user ? (
-              <div>
+              <div className="space-y-3">
                 <NavLink
                   to="/profile"
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex items-center gap-4 px-5 py-3 rounded-2xl text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-all duration-300"
                 >
-                  <img
-                    src={user.photoURL || noprofile}
-                    className="h-10 w-10 rounded-full object-cover"
-                    alt="Profile"
-                  />
+                  <div className="p-0.5 rounded-full border-2 border-brand/30">
+                    <img
+                      src={user.photoURL || noprofile}
+                      className="h-10 w-10 rounded-full object-cover"
+                      alt="Profile"
+                    />
+                  </div>
                   <div>
-                    <p className="text-sm font-bold">{user.name || "User"}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
+                    <p className="text-sm font-semibold text-slate-900">{user.name || "User"}</p>
+                    <p className="text-xs text-slate-500 truncate max-w-48">{user.email}</p>
                   </div>
                 </NavLink>
                 
@@ -248,17 +253,24 @@ const Navbar = () => {
                   <NavLink
                     to="/admin"
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+                    className="flex items-center gap-4 px-5 py-3 rounded-2xl text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-all duration-300"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5M15 19.128a9.019 9.019 0 00-2.25 1.394m-4.5 0A9.02 9.02 0 016 19.128m9.75 0a9.02 9.02 0 002.25-1.394" />
-                    </svg>
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-slate-600">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5M15 19.128a9.019 9.019 0 00-2.25 1.394m-4.5 0A9.02 9.02 0 016 19.128m9.75 0a9.02 9.02 0 002.25-1.394" />
+                      </svg>
+                    </div>
                     <span>Admin Dashboard</span>
                   </NavLink>
                 )}
                 
-                <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-red-600 hover:bg-red-50 w-full">
-                  <LogoutIcon />
+                <button 
+                  onClick={() => { handleLogout(); setIsMenuOpen(false); }} 
+                  className="flex items-center gap-4 w-full px-5 py-3 rounded-2xl text-base font-medium text-red-600 hover:bg-red-50 transition-all duration-300"
+                >
+                  <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+                    <LogoutIcon />
+                  </div>
                   <span>Logout</span>
                 </button>
               </div>
@@ -266,8 +278,7 @@ const Navbar = () => {
               <NavLink
                 to="/login"
                 onClick={() => setIsMenuOpen(false)}
-                className="block w-full text-center py-3 rounded-lg font-bold text-white"
-                style={{ backgroundColor: brandColor }}
+                className="block w-full text-center py-4 rounded-2xl font-semibold text-white btn-premium"
               >
                 Login Account
               </NavLink>

@@ -28,8 +28,8 @@ const categories = [
 const CategorySidebar = () => {
 // ... rest of the component is the same
     return (
-        <nav className="p-4 bg-gray-50 rounded-lg h-full shadow-md">
-            <h3 className="font-extrabold text-lg mb-4 text-red-600 uppercase tracking-wider border-b pb-2">
+        <nav className="p-4 glass-card rounded-lg h-full shadow-lg border-red-200/30">
+            <h3 className="font-extrabold text-lg mb-4 text-red-800 uppercase tracking-wider border-b border-red-300 pb-2">
                 Browse Categories
             </h3>
             <ul>
@@ -38,10 +38,10 @@ const CategorySidebar = () => {
                         <NavLink 
                             to={cat.path} 
                             className={({ isActive }) => 
-                                `flex items-center p-2 rounded-lg transition-colors duration-200 
+                                `flex items-center p-2 rounded-lg transition-all duration-300 hover:scale-105
                                  ${isActive 
-                                    ? 'bg-red-100 text-red-700 font-semibold' 
-                                    : 'text-gray-700 hover:bg-red-50 hover:text-red-600'}`
+                                    ? 'bg-red-100 text-red-700 font-semibold shadow-md' 
+                                    : 'text-red-700 hover:bg-red-50 hover:text-red-600'}`
                             }
                         >
                             <cat.icon />

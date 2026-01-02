@@ -5,6 +5,71 @@ body, html {
   margin: 0;
   padding: 0;
   min-height: 100%;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 25%, #fecaca 50%, #fca5a5 75%, #f87171 100%);
+  background-attachment: fixed;
+}
+
+/* Glass Morphism Utility Classes */
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.glass-dark {
+  background: rgba(185, 28, 28, 0.15);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(185, 28, 28, 0.15);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 12px 40px 0 rgba(185, 28, 28, 0.25);
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(239, 68, 68, 0.1);
+  box-shadow: 0 4px 20px 0 rgba(185, 28, 28, 0.1);
+}
+
+/* Red theme colors */
+.bg-red-gradient {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+}
+
+.bg-red-light {
+  background-color: #fef2f2;
+}
+
+.bg-red-subtle {
+  background-color: #fee2e2;
+}
+
+.text-red-primary {
+  color: #dc2626;
+}
+
+.text-red-dark {
+  color: #991b1b;
+}
+
+/* General red theme overrides */
+.bg-white {
+  background-color: #fef2f2 !important;
 }
 
 /* Layout Structure */
@@ -12,6 +77,8 @@ body, html {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 25%, #fecaca 50%, #fca5a5 75%, #f87171 100%);
+  background-attachment: fixed;
 }
 
 /* Main Content Area */

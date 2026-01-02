@@ -60,9 +60,14 @@ const FlashSaleTimer = () => {
     });
 
     return (
-        <div className="flex items-center space-x-2 bg-red-100 text-red-600 p-2 rounded-lg border border-red-300">
-            <span className="text-sm font-semibold mr-2">Ends In:</span>
-            {timerComponents.length ? timerComponents : <span className="text-sm font-semibold">Time's Up!</span>}
+        <div className="flex items-center gap-3 glass-card px-4 py-2.5 rounded-2xl border-red-200/50 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-red-600">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m2-5a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm font-semibold text-red-700">Ends In:</span>
+            <div className="flex items-center gap-1">
+                {timerComponents.length ? timerComponents : <span className="text-sm font-semibold">Time's Up!</span>}
+            </div>
         </div>
     );
 };
@@ -70,30 +75,50 @@ const FlashSaleTimer = () => {
 
 const ProductGridSection = ({ title, products, showTimer, sectionLink }) => {
     return (
-        <section className="product-grid-section">
+        <section className="product-grid-section space-y-8">
             
-            {/* Header: Title, Timer (optional), and View All Link */}
-            <div className="flex justify-between items-center mb-6">
+            {/* Header with Label Style */}
+            <div className="space-y-4">
+                {/* Label */}
+                <div className="inline-flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                    <span className="text-sm font-semibold uppercase tracking-widest text-red-700/70">
+                        {showTimer ? 'Limited Time Offer' : 'Featured Collection'}
+                    </span>
+                </div>
                 
-                <div className="flex items-center space-x-4">
-                    <h2 className="text-3xl font-extrabold text-gray-900 border-b-4 border-red-600 pb-1">
+                {/* Title Row */}
+                <div className="flex justify-between items-end">
+                    <h2 className="text-4xl font-bold text-red-800 tracking-tight">
                         {title}
                     </h2>
-                    {showTimer && <FlashSaleTimer />}
+                    
+                    <div className="flex items-center gap-4">
+                        {showTimer && <FlashSaleTimer />}
+                        {sectionLink && (
+                            <Link 
+                                to={sectionLink} 
+                                className="group flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-800 transition-colors duration-300"
+                            >
+                                View All
+                                <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    strokeWidth={2} 
+                                    stroke="currentColor" 
+                                    className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
+                            </Link>
+                        )}
+                    </div>
                 </div>
-
-                {sectionLink && (
-                    <Link to={sectionLink} className="text-red-600 font-semibold hover:text-red-800 transition-colors flex items-center">
-                        View All
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 ml-1">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                        </svg>
-                    </Link>
-                )}
             </div>
 
             {/* Product Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
                 {products.map((product, index) => (
                     <ProductCard 
                         key={`product-${product.id}-${index}`} 

@@ -10,7 +10,8 @@ const CART_ACTIONS = {
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR',
   SET_CART: 'SET_CART',
-  CLEAR_CART: 'CLEAR_CART'
+  CLEAR_CART: 'CLEAR_CART',
+  SET_OPERATION_LOADING: 'SET_OPERATION_LOADING'
 };
 
 // Reducer function
@@ -33,7 +34,8 @@ const cartReducer = (state, action) => {
         cartCount: cartService.getItemCount(cart),
         ...totals,
         loading: false,
-        error: null
+        error: null,
+        operationLoading: false
       };
     
     case CART_ACTIONS.CLEAR_CART:
@@ -45,8 +47,12 @@ const cartReducer = (state, action) => {
         totalPrice: 0,
         subtotal: 0,
         loading: false,
-        error: null
+        error: null,
+        operationLoading: false
       };
+    
+    case CART_ACTIONS.SET_OPERATION_LOADING:
+      return { ...state, operationLoading: action.payload };
     
     default:
       return state;
@@ -61,7 +67,8 @@ const initialState = {
   error: null,
   cartCount: 0,
   totalPrice: 0,
-  subtotal: 0
+  subtotal: 0,
+  operationLoading: false
 };
 
 export const useCart = () => {
@@ -71,6 +78,10 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
     const [state, dispatch] = useReducer(cartReducer, initialState);
     const { user } = useAuth();
+    
+    // Re-render cart when items change
+    const cartItems = state.cart?.items || [];
+    // Note: React will automatically re-render when state changes
 
     // Load cart when component mounts or user logs in/out
     useEffect(() => {
@@ -78,6 +89,7 @@ export const CartProvider = ({ children }) => {
             // Sync local cart and then load from backend
             syncCart();
         } else {
+            // For non-logged in users, load from localStorage only
             loadCart();
         }
     }, [user]);
@@ -100,6 +112,8 @@ export const CartProvider = ({ children }) => {
             // Don't set error for 401 issues, just use empty cart
             const emptyCart = { items: [] };
             dispatch({ type: CART_ACTIONS.SET_CART, payload: emptyCart });
+        } finally {
+            dispatch({ type: CART_ACTIONS.SET_LOADING, payload: false });
         }
     };
 
@@ -109,34 +123,11 @@ export const CartProvider = ({ children }) => {
         try {
             console.log('Adding to cart:', { productId, product, quantity });
             const cart = await cartService.addToCart(productId, quantity);
-            console.log('Cart response:', cart);
+            console.log('Cart service response:', cart);
             
-            // Enrich cart items with product details if missing
-            if (cart.items && cart.items.length > 0) {
-                cart.items = cart.items.map(item => {
-                    // If item is missing product details but we have the product info, enrich it
-                    if (!item.name && item.productId === productId) {
-                        return {
-                            ...item,
-                            name: product.name,
-                            brand: product.brand,
-                            image: product.image,
-                            price: product.price,
-                            productId: product._id || productId
-                        };
-                    }
-                    return item;
-                });
-            }
-            
-            // For guest users, also trigger enrichment
-            if (!localStorage.getItem('token')) {
-                await cartService.enrichCartWithProductDetails();
-                const enrichedCart = cartService.getLocalCart();
-                dispatch({ type: CART_ACTIONS.SET_CART, payload: enrichedCart });
-            } else {
-                dispatch({ type: CART_ACTIONS.SET_CART, payload: cart });
-            }
+            // Force cart refresh by fetching updated cart
+            const updatedCart = await cartService.getCart();
+            dispatch({ type: CART_ACTIONS.SET_CART, payload: updatedCart });
         } catch (error) {
             console.error('Add to cart error:', error);
             dispatch({ type: CART_ACTIONS.SET_ERROR, payload: error.message });
@@ -149,20 +140,28 @@ export const CartProvider = ({ children }) => {
         if (newQuantity < 1) return;
         
         try {
+            dispatch({ type: CART_ACTIONS.SET_OPERATION_LOADING, payload: true });
             const cart = await cartService.updateQuantity(productId, newQuantity);
-            dispatch({ type: CART_ACTIONS.SET_CART, payload: cart });
+            // Force cart refresh to ensure UI updates immediately
+            const updatedCart = await cartService.getCart();
+            dispatch({ type: CART_ACTIONS.SET_CART, payload: updatedCart });
         } catch (error) {
             console.error('Update quantity error:', error);
+            dispatch({ type: CART_ACTIONS.SET_OPERATION_LOADING, payload: false });
             // Don't set error state to prevent cart reset
         }
     };
 
     const removeFromCart = async (productId) => {
         try {
+            dispatch({ type: CART_ACTIONS.SET_OPERATION_LOADING, payload: true });
             const cart = await cartService.removeFromCart(productId);
-            dispatch({ type: CART_ACTIONS.SET_CART, payload: cart });
+            // Force cart refresh to ensure UI updates immediately
+            const updatedCart = await cartService.getCart();
+            dispatch({ type: CART_ACTIONS.SET_CART, payload: updatedCart });
         } catch (error) {
             console.error('Remove from cart error:', error);
+            dispatch({ type: CART_ACTIONS.SET_OPERATION_LOADING, payload: false });
             // Don't set error state to prevent cart reset
         }
     };
@@ -217,6 +216,7 @@ export const CartProvider = ({ children }) => {
         cartCount: state.cartCount,
         totalPrice: state.totalPrice,
         subtotal: state.subtotal,
+        operationLoading: state.operationLoading,
         
         // Actions
         addToCart,
