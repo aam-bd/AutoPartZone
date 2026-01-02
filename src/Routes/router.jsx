@@ -14,6 +14,7 @@ import CheckoutPage from "../Pages/CheckoutPage";
 import AccountPage from "../Pages/AccountPage";
 import CategoryPage from "../Pages/CategoryPage";
 import OrderConfirmationPage from "../Pages/OrderConfirmationPage";
+import OrderDetailsPage from "../Pages/OrderDetailsPage";
 import ShopPage from "../Pages/ShopPage"; // **NEW: Assuming you create this page**
 import AdminDashboard from "../Pages/AdminDashboard.jsx"; // **NEW: Admin Dashboard**
 import AdminProductManagement from "../Pages/AdminProductManagement.jsx"; // **NEW: Admin Product Management**
@@ -67,14 +68,16 @@ const router = createBrowserRouter([
       {
         path: "admin",
         element: <AdminDashboard />,
-      },
-      {
-        path: "admin/products",
-        element: <AdminProductManagement />,
-      },
-      {
-        path: "admin/users",
-        element: <UserManagement />,
+        children: [
+          {
+            path: "products",
+            element: <AdminProductManagement />,
+          },
+          {
+            path: "users",
+            element: <UserManagement />,
+          },
+        ],
       },
       {
         path: "profile",
@@ -84,9 +87,13 @@ const router = createBrowserRouter([
         path: "admin/reports",
         element: <ReportsDashboard />,
       },
-      {
+{
         path: "orders",
         element: <OrderHistory />,
+      },
+      {
+        path: "orders/:orderId",
+        element: <OrderDetailsPage />,
       },
     ],
   },

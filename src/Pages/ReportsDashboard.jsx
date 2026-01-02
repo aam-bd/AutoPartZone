@@ -206,7 +206,7 @@ const SalesReport = ({ data }) => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="stat bg-primary text-primary-content rounded-lg">
           <div className="stat-title">Total Revenue</div>
-          <div className="stat-value">${data.summary.totalRevenue.toFixed(2)}</div>
+          <div className="stat-value">৳${data.summary.totalRevenue.toFixed(2)}</div>
         </div>
         <div className="stat bg-secondary text-secondary-content rounded-lg">
           <div className="stat-title">Total Orders</div>
@@ -218,7 +218,7 @@ const SalesReport = ({ data }) => {
         </div>
         <div className="stat bg-info text-info-content rounded-lg">
           <div className="stat-title">Avg Order Value</div>
-          <div className="stat-value">${data.summary.averageOrderValue.toFixed(2)}</div>
+          <div className="stat-value">৳${data.summary.averageOrderValue.toFixed(2)}</div>
         </div>
       </div>
 
@@ -255,7 +255,7 @@ const SalesReport = ({ data }) => {
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="revenue"
-                  label={({ _id, revenue }) => `${_id}: $${revenue.toFixed(0)}`}
+                  label={({ _id, revenue }) => `${_id}: ৳${revenue.toFixed(0)}`}
                 >
                   {data.categoryRevenue.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042'][index % 4]} />
@@ -291,7 +291,7 @@ const SalesReport = ({ data }) => {
                     <td>{product.category}</td>
                     <td>{product.brand}</td>
                     <td>{product.totalQuantity}</td>
-                    <td>${product.totalRevenue.toFixed(2)}</td>
+                    <td>৳{product.totalRevenue.toFixed(2)}</td>
                     <td className={product.currentStock < 10 ? 'text-warning font-semibold' : ''}>
                       {product.currentStock}
                     </td>
@@ -317,7 +317,7 @@ const InventoryReport = ({ data }) => {
         </div>
         <div className="stat bg-secondary text-secondary-content rounded-lg">
           <div className="stat-title">Stock Value</div>
-          <div className="stat-value">${data.summary.totalStockValue.toFixed(2)}</div>
+          <div className="stat-value">৳${data.summary.totalStockValue.toFixed(2)}</div>
         </div>
         <div className="stat bg-warning text-warning-content rounded-lg">
           <div className="stat-title">Low Stock</div>
@@ -350,7 +350,7 @@ const InventoryReport = ({ data }) => {
                     <td className="font-semibold">{category._id}</td>
                     <td>{category.totalProducts}</td>
                     <td>{category.totalStock}</td>
-                    <td>${category.totalValue.toFixed(2)}</td>
+                    <td>৳${category.totalValue.toFixed(2)}</td>
                     <td className={category.lowStockCount > 0 ? 'text-warning font-semibold' : ''}>
                       {category.lowStockCount}
                     </td>
@@ -376,11 +376,11 @@ const CustomerReport = ({ data }) => {
         </div>
         <div className="stat bg-secondary text-secondary-content rounded-lg">
           <div className="stat-title">Total Revenue</div>
-          <div className="stat-value">${data.summary.totalRevenue.toFixed(2)}</div>
+          <div className="stat-value">৳${data.summary.totalRevenue.toFixed(2)}</div>
         </div>
         <div className="stat bg-accent text-accent-content rounded-lg">
           <div className="stat-title">Avg Revenue/Customer</div>
-          <div className="stat-value">${data.summary.averageRevenuePerCustomer.toFixed(2)}</div>
+          <div className="stat-value">৳${data.summary.averageRevenuePerCustomer.toFixed(2)}</div>
         </div>
         <div className="stat bg-info text-info-content rounded-lg">
           <div className="stat-title">VIP Customers</div>
@@ -424,8 +424,8 @@ const CustomerReport = ({ data }) => {
                     <td>{customer.name}</td>
                     <td>{customer.email}</td>
                     <td>{customer.totalOrders}</td>
-                    <td>${customer.totalSpent.toFixed(2)}</td>
-                    <td>${customer.averageOrderValue.toFixed(2)}</td>
+                    <td>৳${customer.totalSpent.toFixed(2)}</td>
+                    <td>৳${customer.averageOrderValue.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>

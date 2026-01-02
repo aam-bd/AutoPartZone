@@ -279,7 +279,7 @@ const AdminProductManagement = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.brand}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.category}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${product.price}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">৳{product.price}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`text-sm font-medium ${product.stock < 10 ? 'text-red-600' : 'text-green-600'}`}>
                     {product.stock}

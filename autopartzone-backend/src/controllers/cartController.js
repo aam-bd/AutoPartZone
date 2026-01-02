@@ -50,7 +50,8 @@ export const addToCart = async (req, res) => {
 export const removeFromCart = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { id } = req.params;
+    const { productId } = req.body;
+    const id = productId || req.params.id; // Support both body and param
 
     const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ message: "Cart not found" });

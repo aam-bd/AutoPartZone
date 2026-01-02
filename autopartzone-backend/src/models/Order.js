@@ -17,12 +17,15 @@ const orderSchema = new mongoose.Schema(
     totalAmount: { type: Number, required: true },
     status: { 
       type: String, 
-      enum: ["processing", "shipped", "delivered", "cancelled", "refunded"],
-      default: "processing" 
+      enum: ["pending", "processing", "shipped", "delivered", "cancelled", "refunded"],
+      default: "pending" 
     },
     
     // Address information
     shippingAddress: {
+      fullName: { type: String, required: true },
+      email: { type: String, required: true },
+      phone: { type: String, required: true },
       street: { type: String, required: true },
       city: { type: String, required: true },
       state: { type: String, required: true },
@@ -30,6 +33,9 @@ const orderSchema = new mongoose.Schema(
       country: { type: String, default: "USA" }
     },
     billingAddress: {
+      fullName: String,
+      email: String,
+      phone: String,
       street: String,
       city: String,
       state: String,
@@ -39,7 +45,7 @@ const orderSchema = new mongoose.Schema(
     
     // Payment information
     paymentMethod: {
-      type: { type: String, enum: ['card', 'paypal', 'cash'], required: true },
+      type: { type: String, enum: ['card', 'paypal', 'cash', 'cod'], required: true },
       last4: String,
       transactionId: { type: String },
       status: { 

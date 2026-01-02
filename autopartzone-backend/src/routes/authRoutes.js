@@ -10,7 +10,10 @@ import {
   getProfile, 
   updateProfile,
   getAllUsers,
-  updateUserRole
+  updateUserRole,
+  deactivateUser,
+  activateUser,
+  exportUsers
 } from "../controllers/authController.js";
 import authenticate from "../middleware/authenticate.js";
 import authorize from "../middleware/authorize.js";
@@ -73,5 +76,8 @@ router.post("/register-admin", async (req, res) => {
 // Admin only routes
 router.get("/users", authenticate, authorize("admin"), getAllUsers);
 router.put("/users/:id/role", authenticate, authorize("admin"), updateUserRole);
+router.put("/users/:id/deactivate", authenticate, authorize("admin"), deactivateUser);
+router.put("/users/:id/activate", authenticate, authorize("admin"), activateUser);
+router.get("/users/export", authenticate, authorize("admin"), exportUsers);
 
 export default router;

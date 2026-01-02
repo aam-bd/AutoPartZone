@@ -304,3 +304,72 @@ export const updateUserRole = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+// Admin only: Deactivate user
+export const deactivateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { isActive: false, status: 'inactive' },
+      { new: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "User deactivated successfully",
+      user
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Admin only: Activate user
+export const activateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { isActive: true, status: 'active' },
+      { new: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "User activated successfully",
+      user
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Admin only: Export users
+export const exportUsers = async (req, res) => {
+  try {
+    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+    
+    // Create CSV content
+    const csvHeader = 'ID,Name,Email,Role,Status,Created At\n';
+    const csvData = users.map(user => 
+      `${user._id},"${user.name || user.fullName}","${user.email}","${user.role}","${user.status || 'active'}","${user.createdAt}"`
+    ).join('\n');
+    
+    const csvContent = csvHeader + csvData;
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=users_export.csv');
+    res.send(csvContent);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

@@ -168,7 +168,7 @@ export const getInventoryReport = async (req, res) => {
     const { format = 'json', category, stockLevel } = req.query;
 
     // Build filter
-    const filter = { isActive: true };
+    const filter = { isAvailable: true };
     if (category) filter.category = category;
     if (stockLevel) {
       switch (stockLevel) {
@@ -191,7 +191,7 @@ export const getInventoryReport = async (req, res) => {
 
     // Category summary
     const categorySummary = await Product.aggregate([
-      { $match: { isActive: true } },
+      { $match: { isAvailable: true } },
       {
         $group: {
           _id: "$category",

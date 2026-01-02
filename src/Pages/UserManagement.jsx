@@ -54,7 +54,7 @@ const UserManagement = () => {
         status: statusFilter
       });
 
-      const response = await fetch(`/api/users?${params}`, {
+      const response = await fetch(`/api/auth/users?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -81,7 +81,7 @@ const UserManagement = () => {
 
   const updateUserRole = async (userId, newRole) => {
     try {
-      const response = await fetch(`/api/users/${userId}/role`, {
+      const response = await fetch(`/api/auth/users/${userId}/role`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ const UserManagement = () => {
     if (!confirm('Are you sure you want to deactivate this user?')) return;
     
     try {
-      const response = await fetch(`/api/users/${userId}/deactivate`, {
+      const response = await fetch(`/api/auth/users/${userId}/deactivate`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -139,7 +139,7 @@ const UserManagement = () => {
 
   const activateUser = async (userId) => {
     try {
-      const response = await fetch(`/api/users/${userId}/activate`, {
+      const response = await fetch(`/api/auth/users/${userId}/activate`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -166,7 +166,7 @@ const UserManagement = () => {
 
   const exportUsers = async () => {
     try {
-      const response = await fetch('/api/users/export', {
+      const response = await fetch('/api/auth/users/export', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

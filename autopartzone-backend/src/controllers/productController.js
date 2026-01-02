@@ -177,17 +177,31 @@ export const getProductById = async (req, res) => {
 export const getFeaturedProducts = async (req, res) => {
   try {
     const { type } = req.params;
-    let query = { isAvailable: true };
+    let query = { isAvailable: true, stock: { $gt: 0 } }; // Only show products with stock
     
-    // For flash sales, we'll simulate with recent products (you can add discount field later)
+    // For flash sales, get products with stock prioritized by recently added
     if (type === 'flash-sale') {
-      // Get recently added products as "flash sales"
-      query.createdAt = { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
+      // Get available products with stock as "flash sales"
+      // First try to get recent products (last 30 days), if none, get any available products
+      const recentDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      query.createdAt = { $gte: recentDate };
     }
     
     const products = await Product.find(query)
       .sort(type === 'flash-sale' ? { createdAt: -1 } : { stock: -1 })
       .limit(12);
+    
+    // If no recent products for flash sale, get any available products with stock
+    if (type === 'flash-sale' && products.length === 0) {
+      const fallbackProducts = await Product.find({ 
+        isAvailable: true, 
+        stock: { $gt: 0 } 
+      })
+      .sort({ createdAt: -1 })
+      .limit(12);
+      
+      return res.json({ products: fallbackProducts });
+    }
     
     res.json({ products });
   } catch (err) {

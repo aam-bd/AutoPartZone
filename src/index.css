@@ -1,3 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+
+/* Global base styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    background-color: #fbfbfb; /* Page background */
+    color: #475569; /* Body text */
+    line-height: 1.6;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    color: #0f172a; /* Header text */
+    letter-spacing: -0.025em; /* tracking-tight */
+  }
+  
+  /* Smooth transitions for all interactive elements */
+  * {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+}
+
+/* Component styles */
+@layer components {
+  /* Glassmorphism card */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Premium card */
+  .premium-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgb(0,0,0,0.04);
+    transition: all 0.3s ease;
+  }
+  
+  .premium-card:hover {
+    box-shadow: 0 12px 40px rgb(0,0,0,0.06);
+    transform: translateY(-2px);
+  }
+  
+  /* Premium button */
+  .btn-premium {
+    background: #be123c;
+    color: white;
+    border-radius: 9999px;
+    padding: 12px 24px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgb(190, 18, 60, 0.2);
+    transition: all 0.3s ease;
+  }
+  
+  .btn-premium:hover {
+    background: #a11032;
+    box-shadow: 0 6px 20px rgb(190, 18, 60, 0.3);
+    transform: translateY(-1px);
+  }
+  
+  /* Minimalist badge */
+  .badge-minimal {
+    background: #fff1f2;
+    color: #be123c;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 9999px;
+    padding: 4px 12px;
+  }
+  
+  /* Skeleton loader */
+  .skeleton {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  
+  /* Status dot */
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  
+  .status-dot.in-stock {
+    background: #10b981;
+    animation: pulse 2s infinite;
+  }
+  
+  .status-dot.low-stock {
+    background: #f59e0b;
+  }
+  
+  .status-dot.out-of-stock {
+    background: #ef4444;
+  }
+}

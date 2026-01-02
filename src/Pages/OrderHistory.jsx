@@ -89,33 +89,49 @@ const OrderHistory = () => {
     const statusConfig = orderService.formatStatus(order.status);
     const totals = orderService.calculateOrderTotals(order);
 
-    return (
-      <div className="card bg-base-100 shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+return (
+      <div className="card bg-base-100 shadow-lg cursor-pointer hover:shadow-xl transition-shadow p-6"
            onClick={() => handleOrderClick(order._id)}>
-        <div className="card-body">
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <div className="flex items-center gap-4 mb-2">
-                <h3 className="font-semibold">Order #{order.orderNumber || order._id?.slice(-8)}</h3>
-                <span className={`badge badge-${statusConfig.color}`}>
-                  {statusConfig.text}
-                </span>
-              </div>
-              
-              <div className="text-sm text-gray-600 space-y-1">
-                <div>Order Date: {new Date(order.createdAt).toLocaleDateString()}</div>
-                <div>Items: {order.items?.length || 0}</div>
-                <div>Total: ${totals.total.toFixed(2)}</div>
-              </div>
+        <div className="flex justify-between items-center">
+          <div className="flex-1">
+            <div className="flex items-center gap-4 mb-3">
+              <h3 className="font-semibold text-lg">Order #{order.orderNumber || order._id?.slice(-8)}</h3>
+              <span className={`badge badge-${statusConfig.color} badge-sm`}>
+                {statusConfig.text}
+              </span>
             </div>
             
-            <div className="text-right">
-              <div className="text-lg font-bold text-primary">
-                ${totals.total.toFixed(2)}
+            <div className="text-sm text-gray-600 space-y-2">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Order Date: {new Date(order.createdAt).toLocaleDateString()}</span>
               </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Click for details
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8-4m8-4l8 4m-8 4v6l8 2m-8-2l-8 2" />
+                </svg>
+                <span>Items: {order.items?.length || 0}</span>
               </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 .895 3 2-1.343 2-3-2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v2m0-4c0 1.11-.89 2-2 2a2 2 0 002-2 2 2-.89 2-2 2-2-.89-2-2z" />
+                </svg>
+                <span>Total: ৳{totals.total.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex flex-col items-center justify-center pl-6">
+            <div className="text-lg font-bold text-primary mb-2">
+              ৳{totals.total.toFixed(2)}
+            </div>
+            <div className="text-sm text-gray-500 flex items-center gap-1">
+              <span>View Details</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </div>
           </div>
         </div>
@@ -194,10 +210,10 @@ const OrderHistory = () => {
                           )}
                         </div>
                       </td>
-                      <td>${item.price.toFixed(2)}</td>
+                      <td>৳{item.price.toFixed(2)}</td>
                       <td>{item.quantity}</td>
                       <td className="font-semibold">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ৳{(item.price * item.quantity).toFixed(2)}
                       </td>
                     </tr>
                   ))}
@@ -213,20 +229,20 @@ const OrderHistory = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>${totals.subtotal.toFixed(2)}</span>
+                  <span>৳{totals.subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax:</span>
-                  <span>${totals.tax.toFixed(2)}</span>
+                  <span>৳{totals.tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping:</span>
-                  <span>${totals.shipping.toFixed(2)}</span>
+                  <span>৳{totals.shipping.toFixed(2)}</span>
                 </div>
                 <div className="divider"></div>
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total:</span>
-                  <span>${totals.total.toFixed(2)}</span>
+                  <span>৳{totals.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>

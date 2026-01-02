@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import ProductCard from '../Components/ProductCard';
 import RelatedProducts from '../Components/RelatedProducts';
-import ProductReviews from '../Components/ProductReviews';
+
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -181,29 +181,12 @@ export default function ProductPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
             <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <i key={i} className={`fas fa-star ${i < Math.floor(product.rating) ? '' : 'text-gray-300'}`}></i>
-                  ))}
-                </div>
-                <span className="ml-2 text-sm text-gray-600">({product.reviews} reviews)</span>
-              </div>
-              <span className="text-sm text-gray-500">|</span>
               <span className="text-sm text-gray-600">Brand: {product.brand}</span>
             </div>
           </div>
 
           <div className="flex items-baseline gap-3">
             <span className="text-3xl font-bold text-primary">৳{product.price}</span>
-            {product.oldPrice && (
-              <span className="text-xl text-gray-500 line-through">৳{product.oldPrice}</span>
-            )}
-            {product.discount && (
-              <span className="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded">
-                -{product.discount}%
-              </span>
-            )}
           </div>
 
           <div className="space-y-2">
@@ -213,7 +196,7 @@ export default function ProductPage() {
             </div>
             <div className="flex items-center gap-2">
               <i className="fas fa-truck text-blue-600"></i>
-              <span className="text-sm text-gray-600">Free shipping on orders over ৳500</span>
+              <span className="text-sm text-gray-600">Free shipping on orders over ৳10,000</span>
             </div>
           </div>
 
@@ -299,10 +282,7 @@ export default function ProductPage() {
         </div>
       </div>
 
-      {/* Reviews */}
-      <div className="mb-12">
-        <ProductReviews reviews={mockReviews} />
-      </div>
+
 
       {/* Related Products */}
       <div>

@@ -12,13 +12,25 @@ const OrderConfirmationPage = () => {
         const orderId = localStorage.getItem('lastOrderId');
         const storedOrder = localStorage.getItem('lastOrder');
         
+        console.log('🔍 OrderConfirmationPage - orderId from localStorage:', orderId);
+        console.log('🔍 OrderConfirmationPage - storedOrder:', storedOrder);
+        
         if (orderId) {
             if (storedOrder) {
-                // Use stored order data if API call fails
+                // Use stored order data directly
                 try {
                     const orderData = JSON.parse(storedOrder);
+                    console.log('✅ Using stored order data:', orderData);
+        console.log('🔢 Order number from stored data:', orderData.orderNumber);
+        console.log('🆔 Order ID from stored data:', orderData.id);
                     setOrder(orderData);
                     setLoading(false);
+                    // Clear localStorage only after successfully using the data
+                    setTimeout(() => {
+                        localStorage.removeItem('lastOrderId');
+                        localStorage.removeItem('lastOrder');
+                        console.log('🗑️ Cleared localStorage after use');
+                    }, 1000);
                 } catch (parseError) {
                     console.error('Error parsing stored order:', parseError);
                     fetchOrderDetails(orderId);
@@ -26,9 +38,6 @@ const OrderConfirmationPage = () => {
             } else {
                 fetchOrderDetails(orderId);
             }
-            // Clear the stored order ID after using it
-            localStorage.removeItem('lastOrderId');
-            localStorage.removeItem('lastOrder');
         } else {
             setError('No order information found');
             setLoading(false);
@@ -102,7 +111,7 @@ const OrderConfirmationPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <p className="text-sm text-gray-500">Order ID</p>
-                                <p className="font-semibold">#{order._id ? order._id.slice(-8).toUpperCase() : 'N/A'}</p>
+                                <p className="font-semibold">#{order.orderNumber || (order._id ? order._id.slice(-8).toUpperCase() : 'N/A')}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Order Status</p>
@@ -110,7 +119,7 @@ const OrderConfirmationPage = () => {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Total Amount</p>
-                                <p className="font-semibold">${order.totalAmount ? order.totalAmount.toFixed(2) : '0.00'}</p>
+                                <p className="font-semibold">৳{order.totalAmount ? order.totalAmount.toFixed(2) : '0.00'}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Payment Method</p>
@@ -125,7 +134,7 @@ const OrderConfirmationPage = () => {
                             {order.items.map((item, index) => (
                                 <div key={index} className="flex justify-between text-sm mb-2">
                                     <span>{item.name} x {item.quantity}</span>
-                                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                                    <span>৳{(item.price * item.quantity).toFixed(2)}</span>
                                 </div>
                             ))}
                         </div>
@@ -134,7 +143,7 @@ const OrderConfirmationPage = () => {
                 
                 <div className="space-y-3">
                     <Link 
-                        to="/orders" 
+                        to={`/orders/${order._id || order.id}`} 
                         className="block w-full px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
                     >
                         View Order Details

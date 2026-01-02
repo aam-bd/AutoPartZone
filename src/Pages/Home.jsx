@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import productService from '../services/productService.jsx';
-import Carousel from '../Components/Carousel';
+import BentoHero from '../Components/BentoHero';
 import FullWidthBanner from '../Components/FullWidthBanner';
 import ServiceInfoBar from '../Components/ServiceInfoBar';
 import ProductGridSection from '../Components/ProductGridSection';
@@ -27,7 +27,7 @@ const Home = () => {
       alt: 'Fast Delivery',
       caption: {
         title: 'Fast & Free Delivery',
-        description: 'Free shipping on orders over $140'
+        description: 'Free shipping on orders over ৳140'
       }
     },
     {
@@ -243,7 +243,7 @@ const Home = () => {
         productService.getProducts({ limit: 8, sortBy: 'createdAt', sortOrder: 'desc' })
       ]);
       
-      // Use real data when available, otherwise use mock data
+      // Process flash sale products
       if (flashSaleResponse && flashSaleResponse.products && flashSaleResponse.products.length > 0) {
         setFlashSaleProducts(flashSaleResponse.products.map(p => ({
           ...p,
@@ -252,9 +252,31 @@ const Home = () => {
           oldPrice: p.discount ? p.price * (1 + p.discount / 100) : null
         })));
       } else {
-        setFlashSaleProducts(mockFlashSaleProducts);
+        // If no flash sale products, get available products with stock instead of mock data
+        try {
+          const fallbackResponse = await productService.getProducts({ 
+            limit: 4, 
+            inStock: true, 
+            sortBy: 'createdAt', 
+            sortOrder: 'desc' 
+          });
+          if (fallbackResponse && fallbackResponse.products && fallbackResponse.products.length > 0) {
+            setFlashSaleProducts(fallbackResponse.products.map(p => ({
+              ...p,
+              id: p._id,
+              image: p.images?.[0] ? `http://localhost:5000/uploads/products/${p.images[0].split('/').pop()}` : '/src/assets/default-part.jpg',
+              oldPrice: p.discount ? p.price * (1 + p.discount / 100) : null
+            })));
+          } else {
+            setFlashSaleProducts([]);
+          }
+        } catch (fallbackErr) {
+          console.error('Fallback fetch failed:', fallbackErr);
+          setFlashSaleProducts([]);
+        }
       }
       
+      // Process explore products
       if (exploreResponse && exploreResponse.products && exploreResponse.products.length > 0) {
         setExploreProducts(exploreResponse.products.map(p => ({
           ...p,
@@ -263,35 +285,50 @@ const Home = () => {
           oldPrice: p.discount ? p.price * (1 + p.discount / 100) : null
         })));
       } else {
-        setExploreProducts(mockExploreProducts);
+        // If no explore products, try to get any available products
+        try {
+          const fallbackResponse = await productService.getProducts({ 
+            limit: 8, 
+            inStock: true 
+          });
+          if (fallbackResponse && fallbackResponse.products && fallbackResponse.products.length > 0) {
+            setExploreProducts(fallbackResponse.products.map(p => ({
+              ...p,
+              id: p._id,
+              image: p.images?.[0] ? `http://localhost:5000/uploads/products/${p.images[0].split('/').pop()}` : '/src/assets/default-part.jpg',
+              oldPrice: p.discount ? p.price * (1 + p.discount / 100) : null
+            })));
+          } else {
+            setExploreProducts([]);
+          }
+        } catch (fallbackErr) {
+          console.error('Explore fallback fetch failed:', fallbackErr);
+          setExploreProducts([]);
+        }
       }
       
       setLoading(false);
     } catch (err) {
       console.error('Error fetching home page data:', err);
       setError(err.message);
-      
-      // Use mock data if API fails
-      setFlashSaleProducts(mockFlashSaleProducts);
-      setExploreProducts(mockExploreProducts);
+      setFlashSaleProducts([]);
+      setExploreProducts([]);
       setLoading(false);
     }
   };
 
   return (
     <div className="home-page">
-      {/* Hero Carousel */}
-      <div className="mt-24">
-        <Carousel images={carouselImages} />
-      </div>
+      {/* Bento Hero Section */}
+      <BentoHero />
 
       {/* Service Info Bar */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <ServiceInfoBar />
       </div>
 
       {/* Flash Sale Section */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <ProductGridSection 
           title="Flash Sale" 
           products={flashSaleProducts}
@@ -301,7 +338,7 @@ const Home = () => {
       </div>
 
       {/* Full Width Banner */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <FullWidthBanner 
           image="/src/assets/car_transparent.gif"
           alt="Auto Parts Banner"
@@ -312,7 +349,7 @@ const Home = () => {
       </div>
 
       {/* Explore Products Section */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <ProductGridSection 
           title="Explore Products" 
           products={exploreProducts}
