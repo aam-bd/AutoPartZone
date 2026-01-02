@@ -1,6 +1,6 @@
 import stripe from 'stripe';
 import Order from '../models/Order.js';
-import Cart from '../models/Cart.js';
+import Cart from '../models/cart.js';
 import Product from '../models/Product.js';
 import AuditLog from '../models/AuditLog.js';
 
