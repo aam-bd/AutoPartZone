@@ -1,5 +1,5 @@
 import Cart from "../models/cart.js";
-import Order from "../models/order.js";
+import OrderModel from "../models/Order.js";
 import Product from "../models/Product.js";
 
 export const placeOrder = async (req, res) => {
@@ -32,7 +32,7 @@ export const placeOrder = async (req, res) => {
     }));
 
     // Create order
-    const order = new Order({
+    const order = new OrderModel({
       userId,
       items: orderItems,
       subtotal: Number(subtotal) || 0,
