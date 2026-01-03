@@ -11,7 +11,7 @@ class ProductService {
       brand: params.brand || '',
       minPrice: params.minPrice || '',
       maxPrice: params.maxPrice || '',
-      search: params.search || '',
+      q: params.search || '',
       sortBy: params.sortBy || 'createdAt',
       sortOrder: params.sortOrder || 'desc',
       inStock: params.inStock !== undefined ? params.inStock : true

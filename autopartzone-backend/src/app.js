@@ -53,11 +53,14 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 // Debug middleware for orders
 app.use('/api/orders', (req, res, next) => {
-  if (req.method === 'POST' && req.path === '/place') {
-    console.log('=== ORDER REQUEST DEBUG ===');
-    console.log('Method:', req.method);
-    console.log('Path:', req.path);
+  console.log('=== ORDERS MIDDLEWARE CALLED ===');
+  console.log('Method:', req.method);
+  console.log('Path:', req.path);
+  console.log('Full URL:', req.originalUrl);
+  if (req.method === 'GET') {
     console.log('Headers:', req.headers);
+  }
+  if (req.method === 'POST' && req.path === '/place') {
     console.log('Body:', JSON.stringify(req.body, null, 2));
   }
   next();
@@ -74,24 +77,12 @@ app.use("/api/auth", authRoutes);
 app.use("/api/stock", stockRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/cart", cartRoutes);
-app.post("/api/orders/final-test", (req, res) => {
-  console.log('🚀 FINAL TEST ROUTE CALLED');
-  res.json({ message: "Final test works", timestamp: new Date().toISOString() });
-});
-
 app.use("/api/orders", orderRoutes);
 app.use("/api/recommend", recommendRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/products", productRoutes);
-
-// Test endpoint - bypass all middleware
-app.post("/test-order-endpoint", (req, res) => {
-  console.log('🚀 TEST ENDPOINT CALLED');
-  console.log('Body:', req.body);
-  res.json({ message: "Test endpoint works", body: req.body });
-});
 
 // Health check endpoint
 app.get("/", (req, res) => {

@@ -30,7 +30,9 @@ const OrderHistory = () => {
     try {
       setLoading(true);
       const response = await orderService.getUserOrders(filters);
-      setOrders(response.orders || response.data?.orders || []);
+      // Handle both array and object responses
+      const ordersList = Array.isArray(response) ? response : (response.orders || response.data?.orders || []);
+      setOrders(ordersList);
       if (response.pagination) {
         setPagination(response.pagination);
       }

@@ -1,12 +1,31 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 const BentoHero = () => {
   const [mounted, setMounted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleQuickSearch = (tag) => {
+    navigate(`/shop?search=${encodeURIComponent(tag)}`);
+  };
 
   const features = [
     {
@@ -84,9 +103,15 @@ const BentoHero = () => {
                 <input
                   type="text"
                   placeholder="Search for parts, brands, or categories..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   className="w-full px-6 py-4 pr-14 text-slate-900 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-inner-soft focus:outline-none focus:ring-4 focus:ring-rose-500/20 focus:border-rose-400 transition-all duration-300 text-lg placeholder-slate-400"
                 />
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl flex items-center justify-center text-white shadow-soft hover:shadow-soft-lg transition-all duration-300 hover:scale-105">
+                <button 
+                  onClick={handleSearch}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl flex items-center justify-center text-white shadow-soft hover:shadow-soft-lg transition-all duration-300 hover:scale-105"
+                >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -97,6 +122,7 @@ const BentoHero = () => {
                 {['Brake Pads', 'Engine Oil', 'Filters', 'Battery'].map((tag) => (
                   <button
                     key={tag}
+                    onClick={() => handleQuickSearch(tag)}
                     className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors duration-200"
                   >
                     {tag}

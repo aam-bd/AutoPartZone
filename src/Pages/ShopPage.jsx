@@ -208,7 +208,7 @@ const ShopPage = () => {
             setLoading(true);
             
             const response = await productService.getProducts({
-                q: filters.search,
+                search: filters.search,
                 category: filters.category,
                 brand: filters.brand,
                 minPrice: filters.minPrice,
@@ -220,11 +220,67 @@ const ShopPage = () => {
                 inStock: filters.inStock
             });
 
-            setProducts(response.products || []);
+            let productsData = response.products || [];
+            
+            // Apply client-side filtering as backup/supplement
+            if (filters.search) {
+                productsData = productsData.filter(product => 
+                    product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+                    product.description.toLowerCase().includes(filters.search.toLowerCase()) ||
+                    product.brand.toLowerCase().includes(filters.search.toLowerCase())
+                );
+            }
+            
+            if (filters.category) {
+                productsData = productsData.filter(product => product.category === filters.category);
+            }
+            
+            if (filters.brand) {
+                productsData = productsData.filter(product => product.brand === filters.brand);
+            }
+            
+            if (filters.minPrice) {
+                productsData = productsData.filter(product => product.price >= parseFloat(filters.minPrice));
+            }
+            if (filters.maxPrice) {
+                productsData = productsData.filter(product => product.price <= parseFloat(filters.maxPrice));
+            }
+            
+            if (filters.inStock) {
+                productsData = productsData.filter(product => product.stock > 0);
+            }
+            
+            // Apply sorting on client-side as backup
+            productsData.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch (filters.sortBy) {
+                    case 'price':
+                        aValue = a.price;
+                        bValue = b.price;
+                        break;
+                    case 'name':
+                        aValue = a.name.toLowerCase();
+                        bValue = b.name.toLowerCase();
+                        break;
+                    case 'createdAt':
+                    default:
+                        aValue = new Date(a.createdAt || 0).getTime();
+                        bValue = new Date(b.createdAt || 0).getTime();
+                }
+                
+                if (filters.sortOrder === 'asc') {
+                    return aValue > bValue ? 1 : -1;
+                } else {
+                    return aValue < bValue ? 1 : -1;
+                }
+            });
+
+            setProducts(productsData);
             setPagination(response.pagination || {
                 current: 1,
                 pages: 1,
-                total: 0,
+                total: productsData.length,
                 limit: filters.limit
             });
             

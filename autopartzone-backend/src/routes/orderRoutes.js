@@ -15,23 +15,26 @@ import { authorize } from "../middleware/authorize.js";
 
 const router = express.Router();
 
-// Customer: place order - temporarily bypass auth for debugging
-router.post("/place", (req, res, next) => {
-  // Mock user for testing
-  req.user = { _id: "6956acd07e91127aa8947be6" }; // Admin User ID
-  next();
-}, placeOrder);
+// Debug route
+router.get("/debug", (req, res) => {
+  console.log('🚀 DEBUG ROUTE CALLED');
+  res.json({ message: "Debug route works", timestamp: new Date().toISOString() });
+});
 
-// Admin/Staff: get all orders
-router.get("/", authenticate, authorize("admin", "staff"), getOrders);
+// Customer: place order
+router.post("/place", authenticate, placeOrder);
 
+// SPECIFIC ROUTES MUST COME BEFORE GENERIC :id ROUTES
 // Customer: get user's orders
 router.get("/user", authenticate, getUserOrders);
 
 // Customer: get user order statistics
 router.get("/user/stats", authenticate, getUserOrderStats);
 
-// Get specific order (customer/admin)
+// Admin/Staff: get all orders
+router.get("/", authenticate, authorize("admin", "staff"), getOrders);
+
+// Get specific order (customer/admin) - GENERIC ROUTE LAST
 router.get("/:id", authenticate, getOrderById);
 
 // Admin/Staff: update order status

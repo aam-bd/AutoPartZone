@@ -1,10 +1,17 @@
 import Cart from "../models/cart.js";
-import OrderModel from "../models/Order.js";
+import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+
+console.log('=== ORDER CONTROLLER LOADED ===');
+console.log('Order model:', !!Order);
+console.log('Order model type:', typeof Order);
 
 export const placeOrder = async (req, res) => {
   try {
     console.log('=== PLACE ORDER CONTROLLER CALLED ===');
+    console.log('req.user:', req.user);
+    console.log('req.user._id:', req.user._id);
+    
     const userId = req.user._id;
     const { items, subtotal, tax, shippingCost, totalAmount, shippingAddress, billingAddress, paymentMethod, status } = req.body;
 
@@ -31,8 +38,17 @@ export const placeOrder = async (req, res) => {
       };
     }));
 
+    // Decrease stock for each ordered item
+    for (const item of orderItems) {
+      await Product.findByIdAndUpdate(
+        item.productId,
+        { $inc: { stock: -item.quantity } },
+        { new: true }
+      );
+    }
+
     // Create order
-    const order = new OrderModel({
+    const order = new Order({
       userId,
       items: orderItems,
       subtotal: Number(subtotal) || 0,
@@ -45,7 +61,12 @@ export const placeOrder = async (req, res) => {
       status: String(status || "pending")
     });
 
+    console.log('Order object before save:', { userId: order.userId, orderNumber: order.orderNumber, itemCount: order.items.length });
+    
     await order.save();
+    
+    console.log('✅ Order saved successfully:', { userId: order.userId, _id: order._id, orderNumber: order.orderNumber });
+    
     await Cart.deleteMany({ userId });
 
     res.json({ 
@@ -63,9 +84,34 @@ export const placeOrder = async (req, res) => {
 
 export const getOrders = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
-    res.json(orders);
+    const { page = 1, limit = 10, status } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+    
+    // Build filter
+    const filter = {};
+    if (status) filter.status = status;
+    
+    // Get total count
+    const total = await Order.countDocuments(filter);
+    
+    // Admin/Staff can view ALL orders with pagination
+    const orders = await Order.find(filter)
+      .populate('userId', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+    
+    res.json({
+      orders,
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(total / limitNum),
+        totalRecords: total,
+        limit: limitNum
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
@@ -122,10 +168,39 @@ export const getOrderById = async (req, res) => {
 
 export const getUserOrders = async (req, res) => {
   try {
+    console.log('=== GET USER ORDERS CALLED ===');
+    console.log('req.user full object:', JSON.stringify(req.user, null, 2));
+    
+    if (!req.user || !req.user._id) {
+      console.error('❌ USER NOT FOUND IN REQUEST');
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+    
     const userId = req.user._id;
+    console.log('🔍 Querying orders with userId:', {
+      userId: userId,
+      userIdType: typeof userId,
+      userIdString: userId?.toString()
+    });
+    
+    // Try querying with both string and ObjectId
     const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+    console.log('✅ Orders found:', orders.length);
+    
+    if (orders.length === 0) {
+      console.warn('⚠️ No orders found for user', userId);
+      // Debug: Check all orders in the database
+      const allOrders = await Order.find({}).select('userId');
+      console.log('📊 Total orders in DB:', allOrders.length);
+      console.log('📊 Sample userIds in DB:', allOrders.slice(0, 5).map(o => ({
+        userId: o.userId,
+        userIdString: o.userId?.toString()
+      })));
+    }
+    
     res.json(orders);
   } catch (err) {
+    console.error('❌ Error in getUserOrders:', err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };

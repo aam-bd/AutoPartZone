@@ -424,14 +424,17 @@ const OrdersSection = ({ token }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1 });
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    fetchOrders(currentPage);
+  }, [currentPage]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (page = 1) => {
     try {
-      const response = await fetch('/api/orders', {
+      setLoading(true);
+      const response = await fetch(`/api/orders?page=${page}&limit=10`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -442,7 +445,10 @@ const OrdersSection = ({ token }) => {
       }
 
       const data = await response.json();
-      setOrders(data.orders || data);
+      setOrders(Array.isArray(data) ? data : (data.orders || []));
+      if (data.pagination) {
+        setPagination(data.pagination);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -524,6 +530,31 @@ const OrdersSection = ({ token }) => {
           <p className="text-center py-8 text-gray-500">No orders found</p>
         )}
       </div>
+      
+      {/* Pagination Controls */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <button
+            className="btn btn-sm btn-outline"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+          
+          <span className="px-4">
+            Page {pagination.currentPage} of {pagination.totalPages}
+          </span>
+          
+          <button
+            className="btn btn-sm btn-outline"
+            onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
+            disabled={currentPage >= pagination.totalPages}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -544,65 +575,41 @@ const AdminDashboard = () => {
       navigate('/login');
       return;
     }
-    // Temporarily disabled analytics call - admin panel functional
-    // fetchDashboardData();
-    setDashboardData({
-      overview: {
-        totalProducts: 12,
-        totalUsers: 17,
-        totalOrders: 46,
-        lowStockProducts: 2,
-        monthlyRevenue: 11664.2,
-        weeklyRevenue: 11664.2
-      },
-      charts: {
-        orderStatusBreakdown: [
-          { _id: 'pending', count: 43 },
-          { _id: 'processing', count: 2 },
-          { _id: 'shipped', count: 1 }
-        ],
-        topSellingProducts: [],
-        recentOrders: [],
-        recentActivity: []
-      }
-    });
-    setLoading(false);
+    fetchDashboardData();
   }, [user, token, navigate]);
 
-  // Analytics call temporarily disabled to fix admin panel
-  // const fetchDashboardData = async () => {
-  //   try {
-  //     const response = await fetch('/api/analytics/dashboard', {
-  //       headers: {
-  //         'Authorization': `Bearer ${token}`
-  //       }
-  //     });
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/analytics/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-  //     if (response.status === 401) {
-  //       // Token expired or invalid, redirect to login
-  //       logout();
-  //       navigate('/login');
-  //       return;
-  //     }
+      if (response.status === 401) {
+        logout();
+        navigate('/login');
+        return;
+      }
 
-  //     if (response.status === 403) {
-  //       // User doesn't have admin role
-  //       setError('Access denied. Admin privileges required.');
-  //       return;
-  //     }
+      if (response.status === 403) {
+        setError('Access denied. Admin privileges required.');
+        return;
+      }
 
-  //     if (!response.ok) {
-  //       throw new Error('Failed to fetch dashboard data');
-  //     }
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
 
-  //     const data = await response.json();
-  //     setDashboardData(data.data);
-  //   } catch (err) {
-  //     setError(err.message);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+      const data = await response.json();
+      setDashboardData(data.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
