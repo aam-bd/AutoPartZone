@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import ProductCard from '../Components/ProductCard';
 import RelatedProducts from '../Components/RelatedProducts';
+import productService from '../services/productService.jsx';
 
 
 export default function ProductPage() {
@@ -11,108 +12,53 @@ export default function ProductPage() {
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [reviews, setReviews] = useState([]);
 
-  // Mock product data
-  const mockProducts = {
-    '1': {
-      _id: '1',
-      name: 'Car Side View Mirror',
-      brand: 'AutoVision',
-      category: 'Mirrors',
-      price: 120,
-      oldPrice: 149,
-      discount: 20,
-      rating: 4.5,
-      image: '/assets/default-part.jpg',
-      images: ['/assets/default-part.jpg'],
-      reviews: 88,
-      stock: 50,
-      description: 'High quality side view mirror with anti-glare coating. This side view mirror provides excellent visibility and reduces glare from headlights at night. Features include:\n\n• High-clarity glass with anti-glare coating\n• Adjustable mirror angles\n• Easy installation\n• Durable construction\n• Weather resistant\n• UV protection\n\nPerfect for daily driving and highway conditions.',
-      features: ['Anti-glare coating', 'Adjustable angles', 'Easy installation', 'Weather resistant'],
-      specifications: {
-        'Material': 'High-quality glass and plastic',
-        'Dimensions': '12" x 8"',
-        'Weight': '1.5 lbs',
-        'Color': 'Black',
-        'Warranty': '1 Year'
-      },
-      compatibility: ['Toyota Camry 2015-2022', 'Honda Accord 2016-2022', 'Nissan Altima 2015-2022']
-    },
-    '2': {
-      _id: '2',
-      name: 'Car Brake Pads',
-      brand: 'BrakeMaster',
-      category: 'Brakes',
-      price: 85,
-      oldPrice: 100,
-      discount: 15,
-      rating: 4.2,
-      image: '/assets/default-part.jpg',
-      images: ['/assets/default-part.jpg'],
-      reviews: 75,
-      stock: 30,
-      description: 'Premium ceramic brake pads for superior stopping power. These brake pads provide excellent performance in all weather conditions.',
-      features: ['Ceramic compound', 'Low dust', 'Quiet operation', 'Long lifespan'],
-      specifications: {
-        'Material': 'Ceramic',
-        'Thickness': '12mm',
-        'Warranty': '2 Years'
+  useEffect(() => {
+    fetchProduct();
+  }, [id]);
+
+  const fetchProduct = async () => {
+    try {
+      setLoading(true);
+      // Fetch the specific product by ID
+      const response = await productService.getProductById(id);
+      console.log('Raw API Response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', Object.keys(response));
+      
+      const productData = response.product || response;
+      console.log('Product data:', productData);
+      console.log('Product images:', productData.images);
+      
+      setProduct(productData);
+      setReviews(response.reviews || []);
+      
+      // Fetch related products (same category)
+      if ((productData?.category)) {
+        const relatedRes = await productService.getProducts({
+          category: productData.category,
+          limit: 4
+        });
+        setRelatedProducts(relatedRes.products || []);
       }
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching product:', err);
+      setError('Product not found');
+      setProduct(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const relatedProducts = [
-    {
-      _id: '3',
-      name: 'Engine Oil Filter',
-      brand: 'FilterPro',
-      category: 'Filters',
-      price: 25,
-      rating: 4.8,
-      image: '/assets/default-part.jpg',
-      reviews: 156
-    },
-    {
-      _id: '4',
-      name: 'Spark Plugs',
-      brand: 'IgnitionTech',
-      category: 'Ignition',
-      price: 35,
-      rating: 4.0,
-      image: '/assets/default-part.jpg',
-      reviews: 42
-    }
-  ];
-
-  const mockReviews = [
-    {
-      _id: '1',
-      user: 'John D.',
-      rating: 5,
-      title: 'Excellent Quality',
-      content: 'Great product! Easy to install and works perfectly.',
-      date: '2024-01-15',
-      helpful: 23
-    },
-    {
-      _id: '2',
-      user: 'Sarah M.',
-      rating: 4,
-      title: 'Good Value',
-      content: 'Product as described. Good quality for the price.',
-      date: '2024-01-10',
-      helpful: 12
-    }
-  ];
-
-  useEffect(() => {
-    // Simulate loading product data
-    setTimeout(() => {
-      const foundProduct = mockProducts[id] || mockProducts['1']; // Default to product 1 if not found
-      setProduct(foundProduct);
-      setLoading(false);
-    }, 500);
-  }, [id]);
+  // Helper function to get image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '/assets/default-part.jpg';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `http://localhost:5000${imagePath}`;
+  };
 
   const handleAddToCart = () => {
     // Add to cart logic here
@@ -145,6 +91,11 @@ export default function ProductPage() {
     );
   }
 
+  console.log('Rendering ProductPage with product:', product);
+  console.log('Product images array:', product.images);
+  const mainImageUrl = getImageUrl(product.images?.[selectedImage]);
+  console.log('Main image URL:', mainImageUrl);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
@@ -152,14 +103,12 @@ export default function ProductPage() {
         <div className="space-y-4">
           <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
             <img 
-              src={product.images[selectedImage] 
-                 ? `http://localhost:5000${product.images[selectedImage]}` 
-                 : '/assets/default-part.jpg'} 
+              src={mainImageUrl}
               alt={product.name}
               className="w-full h-full object-cover"
             />
           </div>
-          {product.images.length > 1 && (
+          {product.images && product.images.length > 1 && (
             <div className="flex gap-2">
               {product.images.map((image, index) => (
                 <button
@@ -169,7 +118,11 @@ export default function ProductPage() {
                     selectedImage === index ? 'border-primary' : 'border-gray-200'
                   }`}
                 >
-                  <img src={image} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover" />
+                  <img 
+                    src={getImageUrl(image)}
+                    alt={`${product.name} ${index + 1}`} 
+                    className="w-full h-full object-cover" 
+                  />
                 </button>
               ))}
             </div>

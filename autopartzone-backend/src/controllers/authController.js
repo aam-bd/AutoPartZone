@@ -25,17 +25,7 @@ export const register = async (req, res) => {
       expiresIn: "1d",
     });
 
-    // Audit log - temporarily disabled for debugging
-    /* await AuditLog.create({
-      userId: user._id,
-      action: 'REGISTER',
-      resource: 'User',
-      resourceId: user._id,
-      details: { name, email, role: user.role },
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent'),
-      success: true
-    }); */
+  
 
     res.json({
       message: "User registered",
@@ -92,16 +82,7 @@ export const login = async (req, res) => {
       expiresIn: "1d",
     });
 
-    // Audit log for successful login - temporarily disabled
-    /* await AuditLog.create({
-      userId: user._id,
-      action: 'LOGIN',
-      resource: 'Auth',
-      details: { email },
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent'),
-      success: true
-    }); */
+   
 
     res.json({
       message: "Login successful",
@@ -115,19 +96,7 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    // Audit log for failed login - temporarily disabled
-    /* if (req.body.email) {
-      await AuditLog.create({
-        userId: null,
-        action: 'LOGIN',
-        resource: 'Auth',
-        details: { email: req.body.email, error: error.message },
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent'),
-        success: false,
-        errorMessage: error.message
-      }).catch(() => {});
-    } */
+ 
     
     res.status(500).json({ message: "Server error", error: error.message });
   }

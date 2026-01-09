@@ -97,6 +97,13 @@ export default function ProductDetailsPage() {
     }
   };
 
+  // Helper function to get image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '/assets/default-part.jpg';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `http://localhost:5000${imagePath}`;
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -151,22 +158,22 @@ export default function ProductDetailsPage() {
           {/* Main Image */}
           <div className="aspect-square bg-slate-50 rounded-3xl overflow-hidden shadow-soft">
             <div className="relative w-full h-full">
-              {!imagesLoaded.has(0) && (
+              {!imagesLoaded.has(selectedImage) && (
                 <div className="skeleton absolute inset-0"></div>
               )}
               <img 
-                src={imagesLoaded.has(0) 
-                  ? (product.image && product.image.startsWith('http') ? product.image : product.image ? `http://localhost:5000${product.image}` : '/assets/default-part.jpg')
+                src={imagesLoaded.has(selectedImage) 
+                  ? getImageUrl(product.images?.[selectedImage] || product.image)
                   : ''}
                 alt={product.name}
                 className={`w-full h-full object-cover transition-opacity duration-500 ${
-                  imagesLoaded.has(0) ? 'opacity-100' : 'opacity-0'
+                  imagesLoaded.has(selectedImage) ? 'opacity-100' : 'opacity-0'
                 }`}
-                onLoad={() => setImagesLoaded(new Set(imagesLoaded).add(0))}
+                onLoad={() => setImagesLoaded(new Set(imagesLoaded).add(selectedImage))}
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = '/assets/default-part.jpg';
-                  setImagesLoaded(new Set(imagesLoaded).add(0));
+                  setImagesLoaded(new Set(imagesLoaded).add(selectedImage));
                 }}
               />
             </div>
@@ -191,7 +198,7 @@ export default function ProductDetailsPage() {
                     )}
                     <img 
                       src={imagesLoaded.has(index) 
-                        ? (image && image.startsWith('http') ? image : image ? `http://localhost:5000${image}` : '/assets/default-part.jpg')
+                        ? getImageUrl(image)
                         : ''} 
                       alt={`${product.name} ${index + 1}`} 
                       className={`w-full h-full object-cover transition-opacity duration-300 ${
