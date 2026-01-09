@@ -161,21 +161,21 @@ export default function ProductDetailsPage() {
               {!imagesLoaded.has(selectedImage) && (
                 <div className="skeleton absolute inset-0"></div>
               )}
-              <img 
-                src={imagesLoaded.has(selectedImage) 
-                  ? getImageUrl(product.images?.[selectedImage] || product.image)
-                  : ''}
-                alt={product.name}
-                className={`w-full h-full object-cover transition-opacity duration-500 ${
-                  imagesLoaded.has(selectedImage) ? 'opacity-100' : 'opacity-0'
-                }`}
-                onLoad={() => setImagesLoaded(new Set(imagesLoaded).add(selectedImage))}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = '/assets/default-part.jpg';
-                  setImagesLoaded(new Set(imagesLoaded).add(selectedImage));
-                }}
-              />
+               <img 
+                 src={imagesLoaded.has(selectedImage) 
+                   ? getImageUrl(product.images?.[selectedImage] || product.image)
+                   : ''}
+                 alt={product.name}
+                 className={`w-full h-full object-contain transition-opacity duration-500 ${
+                   imagesLoaded.has(selectedImage) ? 'opacity-100' : 'opacity-0'
+                 }`}
+                 onLoad={() => setImagesLoaded(new Set(imagesLoaded).add(selectedImage))}
+                 onError={(e) => {
+                   e.target.onerror = null;
+                   e.target.src = '/assets/default-part.jpg';
+                   setImagesLoaded(new Set(imagesLoaded).add(selectedImage));
+                 }}
+               />
             </div>
           </div>
 
@@ -201,7 +201,7 @@ export default function ProductDetailsPage() {
                         ? getImageUrl(image)
                         : ''} 
                       alt={`${product.name} ${index + 1}`} 
-                      className={`w-full h-full object-cover transition-opacity duration-300 ${
+                      className={`w-full h-full object-contain transition-opacity duration-300 ${
                         imagesLoaded.has(index) ? 'opacity-100' : 'opacity-0'
                       }`}
                       onLoad={() => setImagesLoaded(new Set(imagesLoaded).add(index))}
